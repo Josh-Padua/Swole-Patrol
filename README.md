@@ -1,7 +1,8 @@
 # Swole-Patrol
 Software Team Practice Development Repository
-Team Members
-Josh-Padua - Josh Padua
-maanas444 - Maanas Mehta
-Nyima-T - Nyima Tsering
-Caleb-Pace - Caleb Pace
+
+**Team Members**:<br/>
+Josh-Padua - Josh Padua <br/>
+maanas444 - Maanas Mehta <br/>
+Nyima-T - Nyima Tsering <br/>
+Caleb-Pace - Caleb Pace <br/>
