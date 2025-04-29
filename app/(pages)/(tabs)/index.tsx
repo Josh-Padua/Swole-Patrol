@@ -6,6 +6,7 @@ export default function Index() {
         <View>
             <Text>Test</Text>
             <Link href="/(pages)/(tabs)/dashboard">dashboard</Link>
+            <Link href="/(pages)/(tabs)/journal">journal</Link>
         </View>
     )
 }
