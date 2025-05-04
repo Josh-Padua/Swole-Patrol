@@ -30,7 +30,7 @@ const Login = () => {
                 onChangeText={setEmail}
                 placeholder="Email"
                 placeholderTextColor="#6b7280"
-                className="w-full p-3 border border-gray-300 rounded-lg mb-4 text-base"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
@@ -41,7 +41,7 @@ const Login = () => {
                 placeholder="Password"
                 placeholderTextColor="#6b7280"
                 secureTextEntry
-                className="w-full p-3 border border-gray-300 rounded-lg mb-6 text-base"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-6 text-base text-gray-300"
             />
 
             <Pressable
