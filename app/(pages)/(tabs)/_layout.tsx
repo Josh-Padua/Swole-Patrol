@@ -5,7 +5,7 @@ import {Tabs} from "expo-router";
 const TabsLayout = () => {
     return (
         <Tabs
-            options={{
+            screenOptions={{
             headerShown: false,
         }}>
             <Tabs.Screen
@@ -32,13 +32,6 @@ const TabsLayout = () => {
                 name="profile"
                 options={{
                     title: 'Profile',
-                    headerShown: false,
-                }}
-            />
-            <Tabs.Screen
-                name="settings"
-                options={{
-                    title: 'Settings',
                     headerShown: false,
                 }}
             />

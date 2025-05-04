@@ -19,6 +19,9 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
   return <Stack screenOptions={{ headerShown: false }}/>;
 }
