@@ -8,11 +8,28 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import React, { useState } from 'react';
+import {router} from "expo-router";
+import {auth} from "@/config/firebase";
+import {signInWithEmailAndPassword} from "firebase/auth";
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState<boolean>(false);
+    const userAuth = auth
+
+    const signIn = async () => {
+        setLoading(true);
+        try {
+            const response = await signInWithEmailAndPassword(userAuth, email, password);
+            console.log(response);
+        } catch (error: any) {
+            console.log(error);
+            alert('Sign in failed: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     return (
         <KeyboardAvoidingView className="flex-1 justify-center items-center bg-gray-900 px-6" behavior="padding">
@@ -45,7 +62,7 @@ const Login = () => {
             />
 
             <Pressable
-                onPress={() => setLoading(true)}
+                onPress={() => signIn()}
                 className="w-full bg-orange-600 p-3 rounded-lg items-center"
             >
                 {loading ? (
@@ -57,7 +74,7 @@ const Login = () => {
 
             <View className="flex-row items-center mt-6">
                 <Text className="text-gray-600 mr-2">Don't have an account?</Text>
-                <Pressable>
+                <Pressable onPress={() => router.push('/(auth)/createAccount')}>
                     <Text className="text-blue-600 font-semibold">Sign Up</Text>
                 </Pressable>
             </View>
