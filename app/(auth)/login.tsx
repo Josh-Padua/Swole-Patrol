@@ -16,12 +16,11 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState<boolean>(false);
-    const userAuth = auth
 
     const signIn = async () => {
         setLoading(true);
         try {
-            const response = await signInWithEmailAndPassword(userAuth, email, password);
+            const response = await signInWithEmailAndPassword(auth, email, password);
             console.log(response);
         } catch (error: any) {
             console.log(error);
