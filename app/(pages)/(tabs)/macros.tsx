@@ -1,14 +1,33 @@
 import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, TextInput, Button, Alert } from 'react-native'
 import {Link} from "expo-router";
 
 const Macros = () => {
+    const [mealText, setText] = React.useState('');
+
+    const handleSubmit = () => {
+        console.log('Submitted:', mealText);
+        Alert.alert('Meal added! ', mealText); // Not working
+    };
+
     return (
         <View style={styles.background}>
             <View style={[styles.container, { height: 80, width: '100%' }]}>
                 <Link href="/(pages)/(tabs)/dashboard" style={styles.text}>{'<'}- (Back)</Link>
             </View>
             <Text style={[styles.text, { margin: 50, fontSize: 30 }]}>Macros</Text>
+
+            <View style={styles.container}>
+                <TextInput
+                    style={[styles.container, styles.text]}
+                    onChangeText={setText}
+                    placeholder="I ate..."
+                    value={mealText}
+                    onSubmitEditing={handleSubmit}
+                    returnKeyType="done"
+                />
+                <Button title="Submit" onPress={handleSubmit} />
+            </View>
         </View>
     )
 }
