@@ -9,8 +9,9 @@ import {
 import React, { useState } from 'react';
 import {router} from "expo-router";
 import {AntDesign} from "@expo/vector-icons";
-import {auth} from "@/config/firebase";
+import {db, auth} from "@/config/firebase";
 import {createUserWithEmailAndPassword} from "firebase/auth";
+import {doc, setDoc} from "@firebase/firestore";
 
 const CreateAccount = () => {
     const [loading, setLoading] = useState(false);
@@ -23,7 +24,7 @@ const CreateAccount = () => {
     const signUp = async () => {
         setLoading(true);
 
-        if (!email || !password) {
+        if (!email || !password || !firstName || !lastName) {
             alert('Please fill in all fields');
             return;
         }
@@ -40,6 +41,13 @@ const CreateAccount = () => {
 
         try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
+            await setDoc(doc(db, 'users', response.user.uid), {
+                firstName,
+                lastName,
+                email,
+                createdAt: new Date().toISOString(),
+                userId: response.user.uid
+            });
             console.log(response);
             if (response.user) {
                 router.replace('/(pages)/(tabs)');
