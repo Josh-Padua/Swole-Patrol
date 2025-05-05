@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert } from 'react-native';
+import {View, Text, TextInput, Button, Alert, Image, TouchableOpacity} from 'react-native';
 import { db } from '@/config/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
@@ -33,6 +33,7 @@ export default function AddEntry() {
 
     return (
         <View style={{ padding: 20 }}>
+
             <Text style={{ fontSize: 24, marginBottom: 10 }}>Add Journal Entry</Text>
             <TextInput
                 placeholder="Title"
