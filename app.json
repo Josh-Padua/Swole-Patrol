@@ -32,6 +32,18 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Lato-Bold.ttf",
+            "./assets/fonts/Lato-Light.ttf",
+            "./assets/fonts/Lato-Medium.ttf",
+            "./assets/fonts/Lato-Regular.ttf",
+            "./assets/fonts/Lato-Semibold.ttf"
+          ]
+        }
       ]
     ],
     "experiments": {
