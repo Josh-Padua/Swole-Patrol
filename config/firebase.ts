@@ -3,7 +3,7 @@ import { getAuth, signInWithPopup, GoogleAuthProvider  } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 
-const firebaseConfig = {
+export const firebaseConfig = {
     apiKey: "AIzaSyAcsXRcN31Qhpa2BKEM9suss2OfB71BQJE",
     authDomain: "swole-patrol-d82f6.firebaseapp.com",
     projectId: "swole-patrol-d82f6",
