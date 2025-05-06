@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {View, Text, TextInput, Button, Alert, Image, TouchableOpacity} from 'react-native';
 import { db } from '@/config/firebase';
+import { getAuth } from 'firebase/auth';
 import { collection, addDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 
@@ -16,11 +17,21 @@ export default function AddEntry() {
         }
 
         try {
+            const auth = getAuth(); // Get current Firebase Auth instance
+            const user = auth.currentUser;
+
+            if (!user) {
+                Alert.alert('Error', 'User not logged in.');
+                return;
+            }
+
             await addDoc(collection(db, 'journalEntries'), {
                 title,
                 content,
-                date: new Date(), // Save as real Date object (Timestamp in Firestore)
+                date: new Date(),
+                uid: user.uid,
             });
+
             Alert.alert('Success', 'Entry saved!');
             setTitle('');
             setContent('');
