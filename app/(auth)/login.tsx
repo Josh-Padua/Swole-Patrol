@@ -9,28 +9,20 @@ import {
 } from 'react-native';
 import React, { useState } from 'react';
 import {router} from "expo-router";
-import {auth} from "@/config/firebase";
-import {signInWithEmailAndPassword} from "firebase/auth";
+import {useAuth} from "@/app/(auth)/AuthProvider";
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState<boolean>(false);
+    const {signIn} = useAuth();
 
-    const signIn = async () => {
+    const signInPress = async () => {
         setLoading(true);
-        try {
-            const response = await signInWithEmailAndPassword(auth, email, password);
-            console.log(response);
-            if (response.user) {
-                router.replace('/(pages)/(tabs)');
-            }
-        } catch (error: any) {
-            console.log(error);
-            alert('Sign in failed: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
+
+        await signIn(email, password);
+
+        setLoading(false);
     }
 
     return (
@@ -64,7 +56,7 @@ const Login = () => {
             />
 
             <Pressable
-                onPress={() => signIn()}
+                onPress={() => signInPress()}
                 className="w-full bg-orange-600 p-3 rounded-lg items-center"
             >
                 {loading ? (
