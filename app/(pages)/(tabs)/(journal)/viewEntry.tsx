@@ -2,12 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, LayoutAnimation, UIManager, Platform } from 'react-native';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { AntDesign } from '@expo/vector-icons'; // arrow icon
+import { AntDesign } from '@expo/vector-icons';
 
-// Enable layout animation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const formatDate = (date: Date): string => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+};
 
 export default function ViewEntries() {
     const [entries, setEntries] = useState<any[]>([]);
@@ -72,7 +78,7 @@ export default function ViewEntries() {
                             <View>
                                 <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{entry.title}</Text>
                                 <Text style={{ color: '#666' }}>
-                                    {entry.date ? entry.date.toLocaleDateString() : 'No Date'}
+                                    {entry.date ? formatDate(entry.date) : 'No Date'}
                                 </Text>
                             </View>
                             <AntDesign name={isExpanded ? 'up' : 'down'} size={20} color="#333" />
