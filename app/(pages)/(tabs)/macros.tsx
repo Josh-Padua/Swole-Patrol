@@ -44,6 +44,10 @@ const Macros = () => {
     const [mealText, setMealText] = useState('');
     const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [consumedCalories, setConsumedCalories] = useState(0);
+    const [consumedProtein, setConsumedProtein] = useState(0);
+    const [consumedCarbs, setConsumedCarbs] = useState(0);
+    const [consumedFat, setConsumedFat] = useState(0);
 
     const handleInputChange = (text:string) => {
         setMealText(text);
@@ -74,6 +78,12 @@ const Macros = () => {
             if (sanitiseText(mealKey) === sanitisedMealText) {
                 let mealMacros = macroDataSet[mealKey];
                 data = `${mealKey}\nCalories: ${mealMacros.calories} cal;\nProtein: ${mealMacros.protein}g;\nCarbs: ${mealMacros.carbs}g;\nFat: ${mealMacros.fat}g`;
+
+                // Update totals
+                setConsumedCalories(consumedCalories + mealMacros.calories);
+                setConsumedProtein(consumedProtein + mealMacros.protein);
+                setConsumedCarbs(consumedCarbs + mealMacros.carbs);
+                setConsumedFat(consumedFat + mealMacros.fat);
 
                 break;
             }
@@ -111,6 +121,14 @@ const Macros = () => {
                 )}
 
                 <Button title="Submit" onPress={handleSubmit} />
+            </View>
+
+            <View>
+                <Text style={[styles.text, { margin: 20, fontSize: 20 }]}>Consumed:</Text>
+                <Text style={[styles.text, { margin: 0, fontSize: 15 }]}>Calories: {consumedCalories}</Text>
+                <Text style={[styles.text, { margin: 0, fontSize: 15 }]}>Protein: {consumedProtein}</Text>
+                <Text style={[styles.text, { margin: 0, fontSize: 15 }]}>Carbohydrate: {consumedCarbs}</Text>
+                <Text style={[styles.text, { margin: 0, fontSize: 15 }]}>Fats: {consumedFat}</Text>
             </View>
         </View>
     )
