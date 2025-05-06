@@ -9,8 +9,7 @@ import {
 import React, { useState } from 'react';
 import {router} from "expo-router";
 import {AntDesign} from "@expo/vector-icons";
-import {auth} from "@/config/firebase";
-import {createUserWithEmailAndPassword} from "firebase/auth";
+import {useAuth} from "@/app/(auth)/AuthProvider";
 
 const CreateAccount = () => {
     const [loading, setLoading] = useState(false);
@@ -19,37 +18,31 @@ const CreateAccount = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const {signUp} = useAuth();
 
-    const signUp = async () => {
+    const signUpPress = async () => {
         setLoading(true);
-
-        if (!email || !password) {
+        if (!email || !password || !firstName || !lastName) {
             alert('Please fill in all fields');
+            setLoading(false);
             return;
         }
 
         if (password !== confirmPassword) {
             alert('Passwords do not match');
+            setLoading(false);
             return;
         }
 
         if (password.length < 6) {
             alert('Password should be at least 6 characters');
+            setLoading(false);
             return;
         }
 
-        try {
-            const response = await createUserWithEmailAndPassword(auth, email, password);
-            console.log(response);
-            if (response.user) {
-                router.replace('/(pages)/(tabs)');
-            }
-        } catch (error: any) {
-            console.log(error);
-            alert('Sign in failed: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
+        await signUp(email, password, firstName, lastName);
+
+        setLoading(false);
     };
 
     return (
@@ -110,7 +103,7 @@ const CreateAccount = () => {
                 />
 
                 <Pressable
-                    onPress={() => signUp()}
+                    onPress={() => signUpPress()}
                     className="w-full bg-orange-600 p-3 rounded-lg items-center"
                 >
                     {loading ? (
