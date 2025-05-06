@@ -16,7 +16,6 @@ import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
 
 export default function Index() {
-
     const screenWidth = Dimensions.get('window').width;
 
     const [weight, setWeight] = useState(0);
@@ -113,8 +112,14 @@ export default function Index() {
                     <TextInput
                         placeholder="Enter your weight"
                         placeholderTextColor="#6b7280"
-                        value={weight.toString()}
-                        onChangeText={(text) => setWeight(parseFloat(text))}
+                        value={weight === 0 ? '' : weight.toString()}
+                        onChangeText={(text) => {
+                            if (!isNaN(parseFloat(text)) && parseFloat(text) > 0) {
+                                setWeight(parseFloat(text));
+                            } else if (text === '') {
+                                setWeight(0); // Reset to 0 if the input is cleared
+                            }
+                        }}
                         keyboardType="numeric"
                         className="p-3 border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
                     />
