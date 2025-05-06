@@ -13,6 +13,7 @@ import {BarChart, LineChart} from "react-native-chart-kit";
 import React, {useState} from "react";
 import {addDoc, collection} from "firebase/firestore";
 import {db} from "@/config/firebase";
+import {getAuth} from "firebase/auth";
 
 export default function Index() {
 
@@ -27,10 +28,20 @@ export default function Index() {
         }
 
         try {
+            const auth = getAuth();
+            const user = auth.currentUser;
+
+            if (!user) {
+                Alert.alert('Error', 'User not logged in.');
+                return;
+            }
+
             await addDoc(collection(db, 'userStats'), {
                 weight: weight,
                 date: new Date(), // Save as real Date object (Timestamp in Firestore)
+                uid: user.uid,
             });
+
             Alert.alert('Success', 'Weight Updated.');
             setWeight(0);
         } catch (error) {
