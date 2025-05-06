@@ -1,5 +1,5 @@
 import React, {useState} from 'react'
-import { View, Text, StyleSheet, TextInput, Button, Alert, FlatList, TouchableOpacity } from 'react-native'
+import { View, Text, TextInput, Button, Alert, FlatList, TouchableOpacity } from 'react-native'
 import {Link} from "expo-router";
 
 const macroDataSet:{ [key: string]: { calories: number; protein: number; carbs: number; fat: number } }  = {
@@ -93,64 +93,49 @@ const Macros = () => {
         Alert.alert('Meal added! ', data); // Not working
     };
 
-    const renderItem = ({ item }:{ item:string }) => (
+    const renderItem = ({ item }: { item: string }) => (
         <TouchableOpacity onPress={() => handleSuggestionPress(item)}>
-            <Text style={styles.text}>{item}</Text>
+            <Text className={'text-white text-lg m-4'}>{item}</Text>
         </TouchableOpacity>
     );
 
     return (
-        <View style={styles.background}>
-            <Text style={[styles.text, { margin: 50, fontSize: 30 }]}>Macros</Text>
+        <View className={'flex-1 bg-[#19181B] items-center pt-5'}>
+            <Text className={'text-white text-3xl m-10'}>Macros</Text>
 
-            <View style={styles.container}>
+            <View className={'bg-[#2D2E31] p-5 rounded-lg w-80 max-w-md mb-5'}>
                 <TextInput
-                    style={[styles.container, styles.text]}
+                    className={'text-lg m-2 p-2 border border-[#FFEEE5] rounded w-full text-white'}
                     onChangeText={handleInputChange}
                     placeholder="I ate..."
                     value={mealText}
                     onSubmitEditing={handleSubmit}
                     returnKeyType="done"
+                    placeholderTextColor="#FFEEE5"
                 />
                 {showSuggestions && (
-                    <FlatList
-                        data={filteredSuggestions}
-                        renderItem={renderItem}
-                        keyExtractor={(item) => item}
-                    />
+                    <View className={'mt-0 w-full max-h-36 overflow-hidden z-10'}>
+                        <FlatList
+                            data={filteredSuggestions}
+                            renderItem={renderItem}
+                            keyExtractor={(item) => item}
+                            className={'bg-[#2D2E31] border border-[#FFEEE5] rounded'}
+                        />
+                    </View>
                 )}
 
                 <Button title="Submit" onPress={handleSubmit} />
             </View>
 
-            <View>
-                <Text style={[styles.text, { margin: 20, fontSize: 20 }]}>Consumed:</Text>
-                <Text style={[styles.text, { margin: 0, fontSize: 15 }]}>Calories: {consumedCalories}</Text>
-                <Text style={[styles.text, { margin: 0, fontSize: 15 }]}>Protein: {consumedProtein}</Text>
-                <Text style={[styles.text, { margin: 0, fontSize: 15 }]}>Carbohydrate: {consumedCarbs}</Text>
-                <Text style={[styles.text, { margin: 0, fontSize: 15 }]}>Fats: {consumedFat}</Text>
+            <View className={'items-start w-80 max-w-md'}>
+                <Text className={'text-white text-2xl m-5'}>Consumed:</Text>
+                <Text className={'text-white text-base'}>Calories: {consumedCalories}</Text>
+                <Text className={'text-white text-base'}>Protein: {consumedProtein} g</Text>
+                <Text className={'text-white text-base'}>Carbohydrate: {consumedCarbs} g</Text>
+                <Text className={'text-white text-base'}>Fats: {consumedFat} g</Text>
             </View>
         </View>
     )
 }
-
-const styles = StyleSheet.create({
-    background: {
-        flex: 1,
-        backgroundColor: '#19181B',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-    },
-    container: {
-        backgroundColor: '#2D2E31',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-    },
-    text: {
-        color: '#FFEEE5',
-        fontSize: 20,
-        margin: 20,
-    },
-});
 
 export default Macros
