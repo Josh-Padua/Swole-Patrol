@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, Button, FlatList, ScrollView } from 'react-native';
 
+
 export default function StopwatchWithLaps() {
     const [isRunning, setIsRunning] = useState(false);
     const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -43,7 +44,7 @@ export default function StopwatchWithLaps() {
         const currentTime = formatTime(secondsElapsed, millisecondsElapsed);
         setLaps(prevLaps => [...prevLaps, currentTime]);
     };
-
+    //formats the time displayed
     const formatTime = (seconds: number, milliseconds: number) => {
         const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
         const secs = (seconds % 60).toString().padStart(2, '0');
