@@ -35,9 +35,9 @@ const macroDataSet:{ [key: string]: { calories: number; protein: number; carbs: 
     }
 };
 
-function sanitiseText(text:string) {
-    return text.toLowerCase()      // Lower case, for comparison
-        .replace(/[^\w\s_]/g, ""); // Remove symbols
+function sanitiseText(text:string):string {
+    return text.toLowerCase()          // Lower case, for comparison
+               .replace(/[^\w]/g, ""); // Remove symbols
 }
 
 const Macros = () => {
