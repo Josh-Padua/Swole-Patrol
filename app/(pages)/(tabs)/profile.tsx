@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {View, Text, SafeAreaView, Image, Button, TouchableOpacity} from 'react-native';
+import {View, Text, SafeAreaView, Image, Button, TouchableOpacity, Dimensions, ScrollView} from 'react-native';
 import { Link } from 'expo-router';
 import { auth, db } from '../../../config/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import images from "@/constants/images";
+import { BarChart} from "react-native-chart-kit";
 
 const Profile = () => {
     const [user, setUser] = useState(null);
@@ -45,6 +46,7 @@ const Profile = () => {
 
     return (
         <SafeAreaView className="items-center bg-primary-background h-full">
+            <ScrollView>
             {user && userData && (
                 <View className="items-center">
                     <Image source={images.avatar} className="w-10 h-10 rounded-full mt-10 mb-2.5"/>
@@ -66,12 +68,14 @@ const Profile = () => {
                         </View>
                     </View>
 
-                    <View className="bg-primary items-center rounded-lg p-6 mt-6 mb-6 w-full">
-                        <Text className="font-lato-semibold text-xl text-white">Statistics</Text>
-                        <Text className="ml-5 font-lato-medium mt-2 text-white">Dead lift: 300 kg</Text>
-                        <Text className="ml-5 font-lato-medium mt-1.5 text-white">Squat: 265 kg</Text>
-                        <Text className="ml-5 font-lato-medium mt-1.5 text-white">Bench: 150 kg</Text>
-                        <Text className="ml-5 font-lato-medium mt-1.5 text-white">Hip Thrust: 200 kg</Text>
+                    <View className="bg-primary rounded-lg p-6 mt-6 mb-6 w-full items-center">
+                        <Text className="font-lato-semibold text-xl text-white mb-4">Statistics</Text>
+                        <View className="self-start">
+                            <Text className="font-lato-medium mt-2 text-white">Dead lift: 300 kg</Text>
+                            <Text className="font-lato-medium mt-1.5 text-white">Squat: 265 kg</Text>
+                            <Text className="font-lato-medium mt-1.5 text-white">Bench: 150 kg</Text>
+                            <Text className="font-lato-medium mt-1.5 text-white">Hip Thrust: 200 kg</Text>
+                        </View>
                     </View>
 
                     <Link href="/(pages)/settings" className="font-lato-bold text-white mb-2">Settings</Link>
@@ -81,6 +85,7 @@ const Profile = () => {
                     </TouchableOpacity>
                 </View>
             )}
+            </ScrollView>
         </SafeAreaView>
     );
 };
