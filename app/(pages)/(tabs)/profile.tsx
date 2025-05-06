@@ -9,37 +9,12 @@ import { BarChart} from "react-native-chart-kit";
 import {useAuth} from "@/app/(auth)/AuthProvider";
 
 const Profile = () => {
-    const [user, setUser] = useState(null);
-    const { signOut } = useAuth();
-    const [userData, setUserData] = useState(null);
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-
-                // Fetch additional user data from Firestore
-                const userDocRef = doc(db, 'users', currentUser.uid);
-                const userDoc = await getDoc(userDocRef);
-
-                if (userDoc.exists()) {
-                    setUserData(userDoc.data());
-                } else {
-                    console.error('No user data found in the database');
-                }
-            } else {
-                setUser(null);
-                setUserData(null);
-            }
-        });
-
-        return () => unsubscribe();
-    }, []);
+    const { signOut, userData } = useAuth();
 
     return (
         <SafeAreaView className="items-center bg-primary-background h-full">
             <ScrollView>
-            { user && userData && (
+            { userData && (
                 <View className="items-center">
                     <Image source={images.avatar} className="w-10 h-10 rounded-full mt-10 mb-2.5"/>
                     <Text className="font-bold text-white text-3xl">{userData.firstName} {userData.lastName}</Text>
