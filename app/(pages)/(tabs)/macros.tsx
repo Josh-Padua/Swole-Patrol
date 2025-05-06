@@ -2,7 +2,8 @@ import React, {useState} from 'react'
 import { View, Text, StyleSheet, TextInput, Button, Alert, FlatList, TouchableOpacity } from 'react-native'
 import {Link} from "expo-router";
 
-const suggestions = ['Apple Pie', 'Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig'];
+const suggestions:string[] = ['Apple Pie', 'Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig']
+                             .sort();
 
 const Macros = () => {
     const [mealText, setMealText] = useState('');
