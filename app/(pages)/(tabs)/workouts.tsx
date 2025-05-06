@@ -1,11 +1,11 @@
-import {View, Text} from 'react-native'
+import {View, Text, SafeAreaView} from 'react-native'
 import React from 'react'
 
 const Workouts = () => {
     return (
-        <View>
+        <SafeAreaView className="bg-primary-background h-full">
             <Text>Workouts</Text>
-        </View>
+        </SafeAreaView>
     )
 }
 export default Workouts
