@@ -5,8 +5,18 @@ import {Tabs} from "expo-router";
 const TabsLayout = () => {
     return (
         <Tabs
-            options={{
+            screenOptions={{
             headerShown: false,
+                tabBarShowLabel: true,
+                tabBarStyle: {
+                backgroundColor: '#2D2E31',
+                    borderShown: false,
+                    position: 'absolute',
+                    borderTop: 'none',
+                },
+                tabBarLabelStyle: {
+                    color: '#FF5400',
+                }
         }}>
             <Tabs.Screen
                 name="index"
@@ -29,16 +39,16 @@ const TabsLayout = () => {
                 }}
             />
             <Tabs.Screen
-                name="profile"
+                name="journal"
                 options={{
-                    title: 'Profile',
+                    title: 'Journal',
                     headerShown: false,
                 }}
             />
             <Tabs.Screen
-                name="settings"
+                name="profile"
                 options={{
-                    title: 'Settings',
+                    title: 'Profile',
                     headerShown: false,
                 }}
             />
