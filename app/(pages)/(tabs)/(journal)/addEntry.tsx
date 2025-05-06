@@ -15,18 +15,16 @@ export default function AddEntry() {
             return;
         }
 
-        const today = new Date().toISOString().split('T')[0];
-
         try {
             await addDoc(collection(db, 'journalEntries'), {
                 title,
                 content,
-                date: today,
+                date: new Date(), // Save as real Date object (Timestamp in Firestore)
             });
             Alert.alert('Success', 'Entry saved!');
             setTitle('');
             setContent('');
-            router.back(); // Go back to journal main screen
+            router.back();
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'Could not save entry.');
