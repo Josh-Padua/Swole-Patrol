@@ -91,9 +91,6 @@ const Macros = () => {
 
     return (
         <View style={styles.background}>
-            <View style={[styles.container, { height: 80, width: '100%' }]}>
-                <Link href="/(pages)/(tabs)/dashboard" style={styles.text}>{'<'}- (Back)</Link>
-            </View>
             <Text style={[styles.text, { margin: 50, fontSize: 30 }]}>Macros</Text>
 
             <View style={styles.container}>
