@@ -2,8 +2,38 @@ import React, {useState} from 'react'
 import { View, Text, StyleSheet, TextInput, Button, Alert, FlatList, TouchableOpacity } from 'react-native'
 import {Link} from "expo-router";
 
-const suggestions:string[] = ['Apple Pie', 'Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig']
-                             .sort();
+const macroDataSet:{ [key: string]: { calories: number; protein: number; carbs: number; fat: number } }  = {
+    "Breakfast Burrito": {
+        calories: 350,
+        protein: 20,
+        carbs: 35,
+        fat: 15
+    },
+    "Beef Stir-fry": {
+        calories: 450,
+        protein: 30,
+        carbs: 40,
+        fat: 20
+    },
+    "Chicken Salad Sandwich": {
+        calories: 400,
+        protein: 25,
+        carbs: 30,
+        fat: 20
+    },
+    "Chicken Curry": {
+        calories: 500,
+        protein: 35,
+        carbs: 45,
+        fat: 25
+    },
+    "Pasta Primavera": {
+        calories: 420,
+        protein: 15,
+        carbs: 60,
+        fat: 15
+    }
+};
 
 const Macros = () => {
     const [mealText, setMealText] = useState('');
@@ -13,7 +43,7 @@ const Macros = () => {
     const handleInputChange = (text:string) => {
         setMealText(text);
         if (text.length > 0) {
-            const filtered = suggestions.filter(item =>
+            const filtered = Object.keys(macroDataSet).filter(item =>
                 item.toLowerCase().startsWith(text.toLowerCase())
             );
             setFilteredSuggestions(filtered);
@@ -31,8 +61,14 @@ const Macros = () => {
     };
 
     const handleSubmit = () => {
-        console.log('Submitted:', mealText);
-        Alert.alert('Meal added! ', mealText); // Not working
+        let data:string = mealText;
+        if (Object.keys(macroDataSet).includes(mealText)) {
+            let mealMacros = macroDataSet[mealText];
+            data += `\nCalories: ${mealMacros.calories} cal;\nProtein: ${mealMacros.protein}g;\nCarbs: ${mealMacros.carbs}g;\nFat: ${mealMacros.fat}g`;
+        }
+
+        console.log('Submitted:', data);
+        Alert.alert('Meal added! ', data); // Not working
     };
 
     const renderItem = ({ item }:{ item:string }) => (
