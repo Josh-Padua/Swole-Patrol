@@ -9,13 +9,15 @@ import {
 import {auth, db} from '@/config/firebase';
 import {ActivityIndicator, View} from 'react-native';
 import {router} from "expo-router";
-import {doc, setDoc} from "@firebase/firestore";
+// import {doc, setDoc} from "@firebase/firestore";
+import {doc, getDoc, setDoc} from "firebase/firestore";
 
 //useAuth hook to access the auth context
 //example usage: const {user, loading, signIn, signUp, signOut} = useAuth();
 
 type AuthContextType = {
     user: User | null;
+    userData: any | null;
     loading: boolean;
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
@@ -27,10 +29,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [userData, setUserData] = useState<any | null>(null);
 
     useEffect(() => {
         return onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
+            if (currentUser) {
+                const fetchUserData = async () => {
+                    const userDocRef = doc(db, 'users', currentUser.uid);
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (userDoc.exists()) {
+                        setUserData(userDoc.data());
+                    } else {
+                        console.error('No user data found in the database');
+                    }
+                };
+
+                fetchUserData();
+            } else {
+                setUserData(null);
+            }
             setLoading(false);
         });
     }, []);
@@ -87,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut: handleSignOut }}>
+        <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut: handleSignOut, userData}}>
             {children}
         </AuthContext.Provider>
     );
