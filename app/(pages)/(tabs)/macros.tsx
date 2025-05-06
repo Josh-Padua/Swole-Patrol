@@ -35,6 +35,11 @@ const macroDataSet:{ [key: string]: { calories: number; protein: number; carbs: 
     }
 };
 
+function sanitiseText(text:string) {
+    return text.toLowerCase()      // Lower case, for comparison
+        .replace(/[^\w\s_]/g, ""); // Remove symbols
+}
+
 const Macros = () => {
     const [mealText, setMealText] = useState('');
     const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -44,7 +49,7 @@ const Macros = () => {
         setMealText(text);
         if (text.length > 0) {
             const filtered = Object.keys(macroDataSet).filter(item =>
-                item.toLowerCase().startsWith(text.toLowerCase())
+                sanitiseText(item).startsWith(sanitiseText(text))
             );
             setFilteredSuggestions(filtered);
             setShowSuggestions(true);
@@ -61,10 +66,17 @@ const Macros = () => {
     };
 
     const handleSubmit = () => {
-        let data:string = mealText;
-        if (Object.keys(macroDataSet).includes(mealText)) {
-            let mealMacros = macroDataSet[mealText];
-            data += `\nCalories: ${mealMacros.calories} cal;\nProtein: ${mealMacros.protein}g;\nCarbs: ${mealMacros.carbs}g;\nFat: ${mealMacros.fat}g`;
+        let data:string = `${mealText}\n(Macros not found!)`;
+        const sanitisedMealText:string = sanitiseText(mealText);
+
+        // Find matching meal in dataset
+        for (const mealKey of Object.keys(macroDataSet)) {
+            if (sanitiseText(mealKey) === sanitisedMealText) {
+                let mealMacros = macroDataSet[mealKey];
+                data = `${mealKey}\nCalories: ${mealMacros.calories} cal;\nProtein: ${mealMacros.protein}g;\nCarbs: ${mealMacros.carbs}g;\nFat: ${mealMacros.fat}g`;
+
+                break;
+            }
         }
 
         console.log('Submitted:', data);
