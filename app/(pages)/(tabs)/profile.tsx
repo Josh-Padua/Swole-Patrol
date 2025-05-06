@@ -6,9 +6,11 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import images from "@/constants/images";
 import { BarChart} from "react-native-chart-kit";
+import {useAuth} from "@/app/(auth)/AuthProvider";
 
 const Profile = () => {
     const [user, setUser] = useState(null);
+    const { signOut } = useAuth();
     const [userData, setUserData] = useState(null);
 
     useEffect(() => {
@@ -34,20 +36,10 @@ const Profile = () => {
         return () => unsubscribe();
     }, []);
 
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            setUser(null);
-            setUserData(null);
-        } catch (error) {
-            console.error('Error logging out:', error);
-        }
-    };
-
     return (
         <SafeAreaView className="items-center bg-primary-background h-full">
             <ScrollView>
-            {user && userData && (
+            { user && userData && (
                 <View className="items-center">
                     <Image source={images.avatar} className="w-10 h-10 rounded-full mt-10 mb-2.5"/>
                     <Text className="font-bold text-white text-3xl">{userData.firstName} {userData.lastName}</Text>
@@ -79,7 +71,7 @@ const Profile = () => {
                     </View>
 
                     <Link href="/(pages)/settings" className="font-lato-bold text-white mb-2">Settings</Link>
-                    <TouchableOpacity onPress={handleLogout}
+                    <TouchableOpacity onPress={signOut}
                     className="bg-accent-orange py-3 px-6 rounded-lg items-center">
                         <Text className="text-white font-lato-bold">Logout</Text>
                     </TouchableOpacity>

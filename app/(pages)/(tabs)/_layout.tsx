@@ -16,7 +16,9 @@ const TabsLayout = () => {
                 },
                 tabBarLabelStyle: {
                     color: '#FF5400',
-                }
+                },
+                tabBarActiveTintColor: '#FFFFFF',
+                tabBarInactiveTintColor: '#FF5400',
         }}>
             <Tabs.Screen
                 name="index"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {View, Text, TextInput, Button, Alert, Image, TouchableOpacity} from 'react-native';
+import {View, Text, TextInput, Button, Alert, Image, TouchableOpacity, SafeAreaView} from 'react-native';
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
 import { collection, addDoc } from 'firebase/firestore';
@@ -43,9 +43,9 @@ export default function AddEntry() {
     };
 
     return (
-        <View style={{ padding: 20 }}>
+        <SafeAreaView className="bg-primary-background h-full">
 
-            <Text style={{ fontSize: 24, marginBottom: 10 }}>Add Journal Entry</Text>
+            <Text className="font-lato-bold text-accent-orange">Add Journal Entry</Text>
             <TextInput
                 placeholder="Title"
                 value={title}
@@ -61,6 +61,6 @@ export default function AddEntry() {
                 style={{ borderWidth: 1, padding: 8, height: 120, marginBottom: 10 }}
             />
             <Button title="Save Entry" onPress={handleSave} />
-        </View>
+        </SafeAreaView>
     );
 }
