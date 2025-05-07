@@ -46,7 +46,7 @@ export async function getMeal(input:string, mealSet:MealData[]):Promise<MealData
         }
     }
 
-    return null;
+    return null; // No match found
 }
 
 export async function queryMeals(setId:string):Promise<MealData[]> {
@@ -57,9 +57,8 @@ export async function queryMeals(setId:string):Promise<MealData[]> {
         if (!docSnapshot.exists())
             return []; // No meals matching query.
 
+        // Map to raw data to type
         const rawData = docSnapshot.data();
-        console.log('rawData:', rawData); // TODO: Remove, for debugging
-
         return Object.entries(rawData).map(([name, macros]) => ({
             name,
             macros,
