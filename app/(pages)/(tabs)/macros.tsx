@@ -8,7 +8,7 @@ import {
     MealData,
     MacronutrientProfile
 } from "../../api/meal-macros-library";
-import {get, set} from "../../api/user-macros";
+import {getMacros, setMacros} from "../../api/user-macros";
 
 
 let mealSet:MealData[] = [];
@@ -29,7 +29,7 @@ const Macros = () => {
         // Allows for data persistence
         const loadData = async () => {
             // Restore macros from db
-            const macros = await get();
+            const macros = await getMacros();
             if (macros) {
                 setConsumedCalories(macros.calories);
                 setConsumedProtein(macros.protein);
@@ -49,7 +49,7 @@ const Macros = () => {
         setConsumedCarbs(macros.carbohydrates);
         setConsumedFat(macros.fats);
 
-        await set(macros);
+        await setMacros(macros);
     }
 
     const handleInputChange = async (text:string) => {

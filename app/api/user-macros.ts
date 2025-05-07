@@ -16,7 +16,7 @@ function getUserID():string|undefined {
 }
 
 
-export async function get():Promise<MacronutrientProfile | null | undefined> {
+export async function getMacros():Promise<MacronutrientProfile | null | undefined> {
     try {
         const USER_ID = getUserID();
         if (!USER_ID)
@@ -33,9 +33,11 @@ export async function get():Promise<MacronutrientProfile | null | undefined> {
     }
 }
 
-export async function set(macros: MacronutrientProfile):Promise<boolean> {
+export async function setMacros(macros: MacronutrientProfile):Promise<boolean> {
     try {
         const USER_ID = getUserID();
+        if (!USER_ID)
+            return false;
 
         const collectionRef = collection(db, COLLECTION);
         const setDocRef = doc(collectionRef, USER_ID);
