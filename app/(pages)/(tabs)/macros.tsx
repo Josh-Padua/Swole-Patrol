@@ -1,5 +1,6 @@
 import React, {useState} from 'react'
 import { View, Text, TextInput, Button, Alert, FlatList, TouchableOpacity } from 'react-native'
+import {getSuggestions, getMealNames, getMealData} from "../../api/meal-macros-library";
 import {Link} from "expo-router";
 
 const macroDataSet:{ [key: string]: { calories: number; protein: number; carbs: number; fat: number } }  = {
@@ -34,6 +35,7 @@ const macroDataSet:{ [key: string]: { calories: number; protein: number; carbs: 
         fat: 15
     }
 };
+let mealSet:MealData[];
 
 function sanitiseText(text:string):string {
     return text.toLowerCase()          // Lower case, for comparison
@@ -49,13 +51,12 @@ const Macros = () => {
     const [consumedCarbs, setConsumedCarbs] = useState(0);
     const [consumedFat, setConsumedFat] = useState(0);
 
-    const handleInputChange = (text:string) => {
+    const handleInputChange = async (text:string) => {
         setMealText(text);
         if (text.length > 0) {
-            const filtered = Object.keys(macroDataSet).filter(item =>
-                sanitiseText(item).startsWith(sanitiseText(text))
-            );
-            setFilteredSuggestions(filtered);
+            const filteredMeals = await getSuggestions(text);
+
+            setFilteredSuggestions(filteredMeals);
             setShowSuggestions(true);
         } else {
             setFilteredSuggestions([]);
@@ -69,28 +70,23 @@ const Macros = () => {
         setShowSuggestions(false);
     };
 
-    const handleSubmit = () => {
-        let data:string = `${mealText}\n(Macros not found!)`;
-        const sanitisedMealText:string = sanitiseText(mealText);
-
-        // Find matching meal in dataset
-        for (const mealKey of Object.keys(macroDataSet)) {
-            if (sanitiseText(mealKey) === sanitisedMealText) {
-                let mealMacros = macroDataSet[mealKey];
-                data = `${mealKey}\nCalories: ${mealMacros.calories} cal;\nProtein: ${mealMacros.protein}g;\nCarbs: ${mealMacros.carbs}g;\nFat: ${mealMacros.fat}g`;
-
-                // Update totals
-                setConsumedCalories(consumedCalories + mealMacros.calories);
-                setConsumedProtein(consumedProtein + mealMacros.protein);
-                setConsumedCarbs(consumedCarbs + mealMacros.carbs);
-                setConsumedFat(consumedFat + mealMacros.fat);
-
-                break;
-            }
+    const handleSubmit = async () => {
+        const mealData = await getMealData(mealText);
+        const data:string = (mealData != null) ?
+                                `${mealData.name}\nCalories: ${mealData.macros.calories} cal;\nProtein: ${mealData.macros.protein}g;\nCarbs: ${mealData.macros.carbohydrates}g;\nFat: ${mealData.macros.fat}g` :
+                                `${mealText}\n(Macros not found!)`;
+        // Update totals
+        if (mealData != null) {
+            setConsumedCalories(consumedCalories + mealData.macros.calories);
+            setConsumedProtein(consumedProtein + mealData.macros.protein);
+            setConsumedCarbs(consumedCarbs + mealData.macros.carbohydrates);
+            setConsumedFat(consumedFat + mealData.macros.fat);
         }
 
         console.log('Submitted:', data);
         Alert.alert('Meal added! ', data); // Not working
+
+        // console.log(getSuggestions(mealText)); // TODO: Remove, for debugging
     };
 
     const renderItem = ({ item }: { item: string }) => (
