@@ -16,6 +16,23 @@ function getUserID():string|undefined {
 }
 
 
+export async function get():Promise<MacronutrientProfile | null | undefined> {
+    try {
+        const USER_ID = getUserID();
+        if (!USER_ID)
+            return undefined;
+
+        const docSnapshot = await getDoc(doc(db, COLLECTION, USER_ID));
+        if (!docSnapshot.exists())
+            return null; // No data on record
+
+        return docSnapshot.data() as MacronutrientProfile;
+    } catch (error) {
+        console.error("Error reading user macro data:", error);
+        return undefined;
+    }
+}
+
 export async function set(macros: MacronutrientProfile):Promise<boolean> {
     try {
         const USER_ID = getUserID();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, {useEffect, useState} from 'react'
 import { View, Text, TextInput, Button, Alert, FlatList, TouchableOpacity } from 'react-native'
 import {
     queryMeals,
@@ -8,7 +8,7 @@ import {
     MealData,
     MacronutrientProfile
 } from "../../api/meal-macros-library";
-import { set } from "../../api/user-macros";
+import {get, set} from "../../api/user-macros";
 
 
 let mealSet:MealData[] = [];
@@ -22,6 +22,24 @@ const Macros = () => {
     const [consumedProtein, setConsumedProtein] = useState(0);
     const [consumedCarbs, setConsumedCarbs] = useState(0);
     const [consumedFat, setConsumedFat] = useState(0);
+
+
+    // On page load
+    useEffect( () => {
+        // Allows for data persistence
+        const loadData = async () => {
+            // Restore macros from db
+            const macros = await get();
+            if (macros) {
+                setConsumedCalories(macros.calories);
+                setConsumedProtein(macros.protein);
+                setConsumedCarbs(macros.carbohydrates);
+                setConsumedFat(macros.fats);
+            }
+        };
+
+        loadData();
+    }, []);
 
 
     async function updateMacros(macros:MacronutrientProfile):Promise<void> {
