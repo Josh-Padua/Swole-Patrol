@@ -58,18 +58,6 @@ const Macros = () => {
 
         console.log('Submitted:', data);
         Alert.alert('Meal added! ', data); // Not working
-
-
-        // TODO: Remove, for testing
-        await addNewMeal({
-            name: mealText,
-            macros: {
-                calories: 550,
-                protein: 30,
-                carbohydrates: 60,
-                fats: 25,
-            }
-        });
     };
 
     const renderItem = ({ item }: { item: string }) => (
