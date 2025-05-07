@@ -83,6 +83,10 @@ export async function addNewMeal(mealData:MealData):Promise<boolean> {
     }
 }
 
+/**
+ * Fetches the relevant meal sub-set.
+ * @param set The meal input (or it so far).
+ */
 export async function queryMeals(set:string):Promise<MealData[]> {
     const SET_ID:string = getSetID(set);
 
@@ -100,12 +104,22 @@ export async function queryMeals(set:string):Promise<MealData[]> {
     }
 }
 
+/**
+ * Retrieves possible matches based on the current user input.
+ * @param input The users meal input.
+ * @param mealSet The current stored meal set.
+ */
 export async function getPossibleMatches(input:string, mealSet:MealData[]):Promise<string[]> {
     return getMealNames(mealSet).filter(meal =>
         sanitiseString(meal).startsWith(sanitiseString(input))
     );
 }
 
+/**
+ * Retrieves the matching meal data of the input.
+ * @param input The users meal input.
+ * @param mealSet The current stored meal set.
+ */
 export async function getMeal(input:string, mealSet:MealData[]):Promise<MealData | null> {
     const mealNames:string[] = getMealNames(mealSet);
     const sanitisedInput:string = sanitiseString(input);

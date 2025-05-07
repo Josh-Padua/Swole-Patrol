@@ -1,13 +1,6 @@
 import React, {useEffect, useState} from 'react'
-import { View, Text, TextInput, Button, Alert, FlatList, TouchableOpacity } from 'react-native'
-import {
-    queryMeals,
-    getPossibleMatches,
-    getMeal,
-    addNewMeal,
-    MealData,
-    MacronutrientProfile
-} from "../../api/meal-macros-library";
+import { View, Text, TextInput, Button, FlatList, TouchableOpacity } from 'react-native'
+import {queryMeals, getPossibleMatches, getMeal, addNewMeal, MealData, MacronutrientProfile} from "../../api/meal-macros-library";
 import {getMacros, setMacros} from "../../api/user-macros";
 
 
@@ -24,7 +17,9 @@ const Macros = () => {
     const [consumedFat, setConsumedFat] = useState(0);
 
 
-    // On page load
+    /**
+     * On page load.
+     */
     useEffect( () => {
         // Allows for data persistence
         const loadData = async () => {
@@ -43,7 +38,6 @@ const Macros = () => {
 
 
     async function updateMacros(macros:MacronutrientProfile):Promise<void> {
-        // Note: could move to page exit
         setConsumedCalories(macros.calories);
         setConsumedProtein(macros.protein);
         setConsumedCarbs(macros.carbohydrates);
@@ -52,6 +46,9 @@ const Macros = () => {
         await setMacros(macros);
     }
 
+    /**
+     * Manages real-time meal suggestions based on user input.
+     */
     const handleInputChange = async (text:string) => {
         setMealText(text);
 
@@ -72,12 +69,18 @@ const Macros = () => {
         }
     };
 
+    /**
+     * Selects a meal suggestion, updating the input text and hiding the suggestion list.
+     */
     const handleSuggestionPress = (item:string) => {
         setMealText(item);
         setFilteredSuggestions([]);
         setShowSuggestions(false);
     };
 
+    /**
+     * Processes the submitted meal text, retrieve meal details, trigger macro update, and resets the input.
+     */
     const handleSubmit = async () => {
         const mealData = await getMeal(mealText, mealSet);
         const data:string = (mealData != null) ?
@@ -108,6 +111,9 @@ const Macros = () => {
         });
     }
 
+    /**
+     * Used by the FlatList.
+     */
     const renderItem = ({ item }: { item: string }) => (
         <TouchableOpacity onPress={() => handleSuggestionPress(item)}>
             <Text className={'text-white text-lg m-4'}>{item}</Text>

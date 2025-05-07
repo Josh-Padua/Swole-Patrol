@@ -16,6 +16,9 @@ function getUserID():string|undefined {
 }
 
 
+/**
+ * Retrieves the current user's macro stats.
+ */
 export async function getMacros():Promise<MacronutrientProfile | null | undefined> {
     try {
         const USER_ID = getUserID();
@@ -26,6 +29,7 @@ export async function getMacros():Promise<MacronutrientProfile | null | undefine
         if (!docSnapshot.exists())
             return null; // No data on record
 
+        // Retrieve user macro data
         return docSnapshot.data() as MacronutrientProfile;
     } catch (error) {
         console.error("Error reading user macro data:", error);
@@ -33,6 +37,9 @@ export async function getMacros():Promise<MacronutrientProfile | null | undefine
     }
 }
 
+/**
+ * Updates the current user's macro stats.
+ */
 export async function setMacros(macros: MacronutrientProfile):Promise<boolean> {
     try {
         const USER_ID = getUserID();
