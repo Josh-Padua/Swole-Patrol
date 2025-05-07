@@ -95,7 +95,8 @@ const Macros = () => {
         }
 
         console.log('Submitted:', data);
-        Alert.alert('Meal added! ', data); // Not working
+
+        setMealText(""); // Reset input
     };
 
     const resetTotals = async () => {
