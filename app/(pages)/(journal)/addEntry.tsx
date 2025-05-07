@@ -45,12 +45,12 @@ export default function AddEntry() {
     return (
         <SafeAreaView className="bg-primary-background h-full">
 
-            <Text className="font-lato-bold text-accent-orange">Add Journal Entry</Text>
+            <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-5">Add Journal Entry</Text>
             <TextInput
                 placeholder="Title"
                 value={title}
                 onChangeText={setTitle}
-                style={{ borderWidth: 1, padding: 8, marginBottom: 10 }}
+                className="border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
             />
             <TextInput
                 placeholder="Write your thoughts..."
@@ -58,9 +58,17 @@ export default function AddEntry() {
                 onChangeText={setContent}
                 multiline
                 numberOfLines={6}
-                style={{ borderWidth: 1, padding: 8, height: 120, marginBottom: 10 }}
+                className="border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
             />
-            <Button title="Save Entry" onPress={handleSave} />
+            <TouchableOpacity onPress={handleSave}
+                className="bg-accent-orange py-3 px-6 rounded-lg items-center">
+                <Text className="font-lato text-white">Save Entry</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.back()}
+                              className="bg-accent-orange py-3 ml-96 mr-96 px-6 rounded-lg items-center mt-5">
+                <Text className="font-lato text-white">Return</Text>
+            </TouchableOpacity>
         </SafeAreaView>
     );
 }
