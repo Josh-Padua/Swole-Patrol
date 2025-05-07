@@ -4,7 +4,7 @@ import {DocumentData} from "@firebase/firestore";
 
 
 export type MacronutrientProfile = {
-    calories: number;
+    calories: number;      // in kcal
     protein: number;       // in grams
     carbohydrates: number; // in grams
     fats: number;          // in grams

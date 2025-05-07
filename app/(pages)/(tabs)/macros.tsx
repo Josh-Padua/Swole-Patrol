@@ -45,7 +45,7 @@ const Macros = () => {
     const handleSubmit = async () => {
         const mealData = await getMeal(mealText, mealSet);
         const data:string = (mealData != null) ?
-                                `${mealData.name}\nCalories: ${mealData.macros.calories} cal;\nProtein: ${mealData.macros.protein}g;\nCarbs: ${mealData.macros.carbohydrates}g;\nFat: ${mealData.macros.fats}g` :
+                                `${mealData.name}\nCalories: ${mealData.macros.calories} kcal;\nProtein: ${mealData.macros.protein}g;\nCarbs: ${mealData.macros.carbohydrates}g;\nFat: ${mealData.macros.fats}g` :
                                 `${mealText}\n(Macros not found!)`;
 
         // Update totals
