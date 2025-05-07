@@ -1,7 +1,14 @@
-import React, {useState} from 'react'
+import React, { useState } from 'react'
 import { View, Text, TextInput, Button, Alert, FlatList, TouchableOpacity } from 'react-native'
-import {queryMeals, getPossibleMatches, getMeal, MealData, addNewMeal} from "../../api/meal-macros-library";
-import {Link} from "expo-router";
+import {
+    queryMeals,
+    getPossibleMatches,
+    getMeal,
+    addNewMeal,
+    MealData,
+    MacronutrientProfile
+} from "../../api/meal-macros-library";
+import { set } from "../../api/user-macros";
 
 
 let mealSet:MealData[] = [];
@@ -15,6 +22,17 @@ const Macros = () => {
     const [consumedProtein, setConsumedProtein] = useState(0);
     const [consumedCarbs, setConsumedCarbs] = useState(0);
     const [consumedFat, setConsumedFat] = useState(0);
+
+
+    async function updateMacros(macros:MacronutrientProfile):Promise<void> {
+        // Note: could move to page exit
+        setConsumedCalories(macros.calories);
+        setConsumedProtein(macros.protein);
+        setConsumedCarbs(macros.carbohydrates);
+        setConsumedFat(macros.fats);
+
+        await set(macros);
+    }
 
     const handleInputChange = async (text:string) => {
         setMealText(text);
@@ -50,15 +68,26 @@ const Macros = () => {
 
         // Update totals
         if (mealData != null) {
-            setConsumedCalories(consumedCalories + mealData.macros.calories);
-            setConsumedProtein(consumedProtein + mealData.macros.protein);
-            setConsumedCarbs(consumedCarbs + mealData.macros.carbohydrates);
-            setConsumedFat(consumedFat + mealData.macros.fats);
+            await updateMacros({
+                calories: consumedCalories + mealData.macros.calories,
+                protein: consumedProtein + mealData.macros.protein,
+                carbohydrates: consumedCarbs + mealData.macros.carbohydrates,
+                fats: consumedFat + mealData.macros.fats
+            });
         }
 
         console.log('Submitted:', data);
         Alert.alert('Meal added! ', data); // Not working
     };
+
+    const resetTotals = async () => {
+        await updateMacros({
+            calories: 0,
+            protein: 0,
+            carbohydrates: 0,
+            fats: 0
+        });
+    }
 
     const renderItem = ({ item }: { item: string }) => (
         <TouchableOpacity onPress={() => handleSuggestionPress(item)}>
@@ -100,6 +129,7 @@ const Macros = () => {
                 <Text className={'text-white text-base'}>Protein: {consumedProtein} g</Text>
                 <Text className={'text-white text-base'}>Carbohydrate: {consumedCarbs} g</Text>
                 <Text className={'text-white text-base'}>Fats: {consumedFat} g</Text>
+                <Button title="Reset" onPress={resetTotals} />
             </View>
         </View>
     )
