@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {View, Text, SafeAreaView, Image, Button, TouchableOpacity, Dimensions, ScrollView} from 'react-native';
 import { Link } from 'expo-router';
-import { auth, db } from '../../../config/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 import images from "@/constants/images";
 import { BarChart} from "react-native-chart-kit";
 import {useAuth} from "@/app/(auth)/AuthProvider";
@@ -12,8 +9,8 @@ const Profile = () => {
     const { signOut, userData } = useAuth();
 
     return (
-        <SafeAreaView className="items-center bg-primary-background h-full">
-            <ScrollView>
+        <SafeAreaView className="items-center bg-primary-background h-full pb-10">
+            <ScrollView className="pb-5">
             { userData && (
                 <View className="items-center">
                     <Image source={images.avatar} className="w-10 h-10 rounded-full mt-10 mb-2.5"/>

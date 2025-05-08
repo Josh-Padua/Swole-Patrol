@@ -5,7 +5,6 @@ import {
     ScrollView,
     Text,
     TextInput,
-    Touchable,
     TouchableOpacity,
     View
 } from "react-native";
@@ -15,7 +14,7 @@ import {addDoc, collection} from "firebase/firestore";
 import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
 import {getMacros} from "@/app/api/user-macros";
-import {useAuth} from "@/app/(auth)/AuthProvider";
+import firebase from "firebase/compat";
 
 export default function Index() {
     const screenWidth = Dimensions.get('window').width;
@@ -25,7 +24,6 @@ export default function Index() {
     const [protein, setProtein] = useState(0);
     const [carbs, setCarbs] = useState(0);
     const [fats, setFats] = useState(0);
-    const { user } = useAuth();
 
     const handleGoalUpdate = async () => {
         if (weight === 0) {
@@ -73,8 +71,8 @@ export default function Index() {
     })
 
     return (
-        <SafeAreaView className="items-center bg-primary-background h-full">
-            <ScrollView>
+        <SafeAreaView className="items-center bg-primary-background h-full pb-10">
+            <ScrollView className="pb-5">
             <View className="flex-1 items-center">
                 <Text className="text-3xl font-bold text-white font-lato-bold mb-5">Home</Text>
                 <View className="w-full px-4 bg-primary rounded-lg items-center">
@@ -84,7 +82,7 @@ export default function Index() {
                             labels: ['KCal', 'Protein', 'Carbs', 'Fats'],
                             datasets: [
                                 {
-                                    data: [kCal, protein, carbs, fats], // Takes from API to display
+                                    data: [kCal, protein, carbs, fats], // Uses API to take data from Firebase to display
                                 },
                             ],
                         }}
@@ -111,13 +109,13 @@ export default function Index() {
                             labels: [],
                             datasets: [
                                 {
-                                    data: [75, 76.2, 80.22, 81.3, 80.88],
-                                },
-                            ],
+                                    data: [70, 80, 90, 100],
+                                }
+                            ]
                         }}
                         width={screenWidth - 40}
                         height={300}
-                        yAxisSuffix="kg"
+                        yAxisSuffix=" kg"
                         chartConfig={{
                             backgroundColor: '#2D2E31',
                             backgroundGradientFrom: '#2D2E31',
