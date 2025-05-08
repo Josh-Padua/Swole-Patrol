@@ -12,40 +12,23 @@ import {
 import React, {useEffect, useState} from 'react'
 import {useAuth} from "@/app/(auth)/AuthProvider";
 import {AntDesign} from "@expo/vector-icons";
-import {doc, setDoc} from 'firebase/firestore';
+import {collection, doc, getDocs, setDoc} from 'firebase/firestore';
 import {db} from '@/config/firebase';
 
 const Workouts = () => {
     const {userData} = useAuth();
     const day = new Date().toLocaleDateString('en-US', {weekday: 'long'});
+    const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
     const [currentWorkout, setCurrentWorkout] = useState('Push');
-    const [isVisible, setIsVisible] = useState(false);
     const [exercises, setExercises] = useState<{
         id: number;
         name: string;
         sets: { weight: number; reps: number }[]
     }[]>([]);
     const [saving, setSaving] = useState(false);
-
-    //test data
-    const data = [
-        {label: 'Pull', value: '1'},
-        {label: 'Legs', value: '2'},
-        {label: 'Upper', value: '3'},
-        {label: 'Lower', value: '4'},
-        {label: 'Arms', value: '5'},
-        {label: 'Back', value: '6'},
-        {label: 'Shoulders', value: '7'},
-        {label: 'Chest', value: '8'},
-        {label: 'Core', value: '9'},
-        {label: 'Cardio', value: '10'},
-        {label: 'Full Body', value: '11'},
-        {label: 'HIIT', value: '12'},
-        {label: 'Yoga', value: '13'},
-        {label: 'Pilates', value: '14'},
-        {label: 'CrossFit', value: '15'},
-        {label: 'Zumba', value: '16'},
-    ];
+    const [templates, setTemplates] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [showTemplates, setShowTemplates] = useState(false);
 
     const addSet = (exerciseId: number) => {
         setExercises((prev) => {
@@ -103,7 +86,7 @@ const Workouts = () => {
                 date: new Date().toISOString(),
             };
 
-            const workoutDocRef = doc(db, `users/${userId}/workouts`, workoutName);
+            const workoutDocRef = doc(db, `users/${userId}/workouts`, date);
             await setDoc(workoutDocRef, workoutData);
 
             console.log("Workout saved successfully:", workoutData);
@@ -122,6 +105,44 @@ const Workouts = () => {
         });
     };
 
+    const fetchWorkoutTemplates = async () => {
+        if (!userData || !userData.userId) return;
+
+        setLoading(true);
+        try {
+            const templatesRef = collection(db, `workoutTemplates/`);
+            const snapshot = await getDocs(templatesRef);
+            const templateData = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+
+            console.log("Fetched templates:", templateData);
+            setTemplates(templateData);
+
+        } catch (error) {
+            console.error("Error fetching workout templates:", error);
+        }
+        setLoading(false);
+    };
+
+    const loadWorkoutTemplate = (template: any) => {
+        setCurrentWorkout(template.workoutName);
+
+        const initializedExercises = template.exercises.map((ex: any, index: number) => {
+            const sets = Array(ex.defaultSets || 0).fill({weight: 0, reps: 0});
+            return {
+                id: ex.id || index + 1,
+                name: ex.name || `Exercise ${index + 1}`,
+                sets: sets
+            };
+        });
+
+        setExercises(initializedExercises);
+        setShowTemplates(false);
+    };
+
+
     useEffect(() => {
         addExercise(1, "Exercise 1");
         addExercise(2, "Exercise 2");
@@ -129,7 +150,7 @@ const Workouts = () => {
     }, []);
 
     return (
-        <SafeAreaView className="bg-primary-background h-full" style={{paddingBottom: 162}}>
+        <SafeAreaView className="bg-primary-background h-full" style={{paddingBottom: 210}}>
             <View className='flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg'>
                 <Pressable
                     className="w-10 h-10 justify-center items-center"
@@ -148,33 +169,50 @@ const Workouts = () => {
                     <Text className="text-white text-xl mr-2 font-bold">Current workout: </Text>
                     <Text className="text-blue-500 font-bold text-xl">{currentWorkout}</Text>
                     <TouchableOpacity
-                        className="rounded-lg p-3 "
-                        onPress={() => setIsVisible(true)}
+                        className="rounded-lg p-3"
+                        onPress={() => {
+                            fetchWorkoutTemplates();
+                            setShowTemplates(true);
+                        }}
                     >
                         <AntDesign name="edit" size={20} color="white"/>
                     </TouchableOpacity>
                 </View>
-                <Modal visible={isVisible} transparent animationType="slide">
+                <Modal visible={showTemplates} transparent animationType="slide">
                     <TouchableOpacity
                         className="flex-1 bg-black/85"
-                        onPress={() => setIsVisible(false)}
+                        onPress={() => setShowTemplates(false)}
                     />
                     <View className="flex-1 p-4 bg-black/85">
-                        <FlatList className="mb-14"
-                                  data={data}
-                                  keyExtractor={(item) => item.value}
-                                  renderItem={({item}) => (
-                                      <TouchableOpacity
-                                          className="p-3 border-gray-300"
-                                          onPress={() => {
-                                              setCurrentWorkout(item.label);
-                                              setIsVisible(false);
-                                          }}
-                                      >
-                                          <Text className="text-white">{item.label}</Text>
-                                      </TouchableOpacity>
-                                  )}
-                        />
+                        <Text className="m-4 text-white text-xl font-bold">Workout Templates</Text>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#fff" className="my-4"/>
+                        ) : templates.length > 0 ? (
+                            <FlatList
+                                data={templates}
+                                keyExtractor={(item, index) => item.id || index.toString()}
+                                renderItem={({item}) => (
+                                    <TouchableOpacity
+                                        className="bg-gray-800 p-4 rounded-lg mb-3 border border-gray-700"
+                                        onPress={() => loadWorkoutTemplate(item)}
+                                    >
+                                        <Text className="text-white text-lg font-bold">{item.workoutName}</Text>
+                                        <Text className="text-gray-400 mt-1">
+                                            {item.exercises ? `${item.exercises.length} exercises` : 'No exercises'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        ) : (
+                            <View className="flex-1 justify-center items-center">
+                                <Text className="text-white text-lg">No templates found</Text>
+                                <TouchableOpacity
+                                    className="bg-orange-600 px-4 py-2 rounded-lg mt-4"
+                                >
+                                    <Text className="text-white">Create Default Templates</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
                 </Modal>
             </View>
@@ -184,7 +222,7 @@ const Workouts = () => {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({item}) => (
                         <View className="bg-primary m-2 rounded-lg p-2">
-                            <Text className="text-white text-xl font-bold ml-2">Exercise {item.id}</Text>
+                            <Text className="text-white text-xl font-bold ml-2">{item.name}</Text>
                             {item.sets.map((set, index) => (
                                 <View className="flex-row justify-between" key={index}>
                                     <View className="flex-1 justify-start items-start m-2 px-2 mt-12">
