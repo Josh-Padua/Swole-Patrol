@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import { View, Text } from 'react-native';
+import {View, Text, TouchableOpacity} from 'react-native';
 
 
 type barConfig = {
@@ -12,6 +12,12 @@ type barConfig = {
 const StatusBar = ({title, current, target, config}:{title:string, current:number, target: number, config:barConfig}) => {
     const [_current, setCurrent] = useState(current);
     const [_target, setTarget] = useState(target);
+
+    const GOAL_COLORS = {
+        COMPLETE: config.foregroundColor, // or '#02c73d',
+        IN_PROGRESS: '#b8b8b8'
+    }
+
 
     /**
      * External bindings
@@ -37,7 +43,10 @@ const StatusBar = ({title, current, target, config}:{title:string, current:numbe
                 justifyContent: 'space-between'
             }}>
                 <Text className={'text-white text-base'}>{title}</Text>
-                <Text className={'text-white text-base'}>{_target}</Text>
+                <Text style={{
+                    color: ((getPercentage() > 99.9) ? GOAL_COLORS.COMPLETE : GOAL_COLORS.IN_PROGRESS),
+                    fontSize: 16
+                }}>{_target}</Text>
             </View>
 
             <View style={{
