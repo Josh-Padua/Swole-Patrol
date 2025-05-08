@@ -15,6 +15,7 @@ import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
 import {getMacros} from "@/app/api/user-macros";
 import firebase from "firebase/compat";
+import {router} from "expo-router";
 
 export default function Index() {
     const screenWidth = Dimensions.get('window').width;
@@ -131,7 +132,7 @@ export default function Index() {
                 <View className="w-full px-4 bg-primary rounded-lg items-center mt-5">
                     <Text className="text-white text-2xl font-lato-bold mb-10">Update Weight</Text>
                     <TextInput
-                        placeholder="Enter your weight"
+                        placeholder="Enter your weight in Kgs"
                         placeholderTextColor="#6b7280"
                         value={weight === 0 ? '' : weight.toString()}
                         onChangeText={(text) => {
@@ -147,6 +148,10 @@ export default function Index() {
                     <TouchableOpacity onPress={handleGoalUpdate}
                         className="bg-accent-orange py-3 px-6 rounded-lg items-center mb-2">
                         <Text className="text-white font-lato-bold">Update Weight</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/(pages)/weightsPage')}
+                                      className="bg-accent-orange py-3 px-6 rounded-lg items-center mb-2">
+                        <Text className="text-white font-lato-bold">View Weights Log</Text>
                     </TouchableOpacity>
                 </View>
 
