@@ -43,6 +43,10 @@ const StatusBar = ({title, current, target, config}:{title:string, current:numbe
         setIsEditing(false);
     };
 
+    /**
+     * Updates the target value.
+     * @param text input (number).
+     */
     const handleChangeText = (text: string) => {
         const parsedValue = parseFloat(text);
 
@@ -53,6 +57,9 @@ const StatusBar = ({title, current, target, config}:{title:string, current:numbe
     };
 
 
+    /**
+     * Calculate percentage based of current (progress) and target (goal).
+     */
     function getPercentage():number {
         let percentage:number = (_current > 0) ? (_current / _target) : 0;
         percentage = Math.max(0, percentage);   // Lower bounds
