@@ -30,13 +30,19 @@ const StatusBar = ({title, current, target, config}:{title:string, current:numbe
         setTarget(target);
     }, [current, target]);
 
+    /**
+     * Editing event hook.
+     * (This solves the timing issue when trying to focus on an element that doesn't yet exist)
+     */
+    useEffect(() => {
+        if (isEditing && inputRef) {
+            inputRef.current?.focus();
+        }
+    }, [isEditing]);
+
 
     const handlePress = () => {
         setIsEditing(true);
-
-        // Set focus
-        if (inputRef)
-            inputRef.current?.focus();
     };
 
     const handleBlur = () => {
