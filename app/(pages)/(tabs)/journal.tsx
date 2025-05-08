@@ -6,7 +6,7 @@ export default function JournalMain() {
     const router = useRouter();
 
     return (
-        <SafeAreaView className="h-full bg-primary-background items-center">
+        <SafeAreaView className="h-full bg-primary-background items-center justify-center">
             <Text className="text-3xl text-white font-lato-bold mb-5">Journal</Text>
             <View className="flex-row">
                 <TouchableOpacity onPress={() => router.push('/(pages)/(journal)/addEntry')}
