@@ -10,15 +10,22 @@ import {
     View
 } from "react-native";
 import {BarChart, LineChart} from "react-native-chart-kit";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {addDoc, collection} from "firebase/firestore";
 import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
+import {getMacros} from "@/app/api/user-macros";
+import {useAuth} from "@/app/(auth)/AuthProvider";
 
 export default function Index() {
     const screenWidth = Dimensions.get('window').width;
-
     const [weight, setWeight] = useState(0);
+
+    const [kCal, setKCal] = useState(0);
+    const [protein, setProtein] = useState(0);
+    const [carbs, setCarbs] = useState(0);
+    const [fats, setFats] = useState(0);
+    const { user } = useAuth();
 
     const handleGoalUpdate = async () => {
         if (weight === 0) {
@@ -49,6 +56,22 @@ export default function Index() {
         }
     }
 
+    useEffect(() => {
+
+        const loadData = async () => {
+            const macros = await getMacros();
+            if (macros) {
+                setKCal(macros.calories);
+                setProtein(macros.protein);
+                setCarbs(macros.carbohydrates);
+                setFats(macros.fats);
+            }
+        };
+
+        loadData();
+        // Learn how to prompt rereading after user updates what they eat.
+    })
+
     return (
         <SafeAreaView className="items-center bg-primary-background h-full">
             <ScrollView>
@@ -61,7 +84,7 @@ export default function Index() {
                             labels: ['KCal', 'Protein', 'Carbs', 'Fats'],
                             datasets: [
                                 {
-                                    data: [75, 175, 220, 70], // Hardcoded data
+                                    data: [kCal, protein, carbs, fats], // Takes from API to display
                                 },
                             ],
                         }}
@@ -85,7 +108,7 @@ export default function Index() {
                     <Text className="text-white text-lg font-lato-bold mb-4 mt-2">Weight-Over-Time</Text>
                     <LineChart
                         data={{
-                            // labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                            labels: [],
                             datasets: [
                                 {
                                     data: [75, 76.2, 80.22, 81.3, 80.88],

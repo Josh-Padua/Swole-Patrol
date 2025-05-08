@@ -9,7 +9,6 @@ import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {router} from "expo-router";
 
-
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
