@@ -6,6 +6,7 @@ import StatusBar from "../../../components/statusBar";
 
 
 let mealSet:MealData[] = [];
+const BUTTON_COLOR = '#ff5400'
 
 
 const Macros = () => {
@@ -148,7 +149,11 @@ const Macros = () => {
                     </View>
                 )}
 
-                <Button title="Submit" onPress={handleSubmit} />
+                <Button
+                    color={BUTTON_COLOR}
+                    title="Submit"
+                    onPress={handleSubmit}
+                />
             </View>
 
             <View className={'bg-[#2D2E31] p-5 rounded-lg w-80 max-w-md mb-5'}>
@@ -193,14 +198,14 @@ const Macros = () => {
                         backgroundColor: '#3dba4a'
                     }}
                 />
-            </View>
 
-            <View className={'items-start w-80 max-w-md'}>
-                <Text className={'text-white text-base'}>Calories: {consumedCalories}</Text>
-                <Text className={'text-white text-base'}>Protein: {consumedProtein} g</Text>
-                <Text className={'text-white text-base'}>Carbohydrate: {consumedCarbs} g</Text>
-                <Text className={'text-white text-base'}>Fats: {consumedFat} g</Text>
-                <Button title="Reset" onPress={resetTotals} />
+                <View className={'mt-10'}>
+                    <Button
+                        color={BUTTON_COLOR}
+                        title="Reset"
+                        onPress={resetTotals}
+                    />
+                </View>
             </View>
         </View>
     )
