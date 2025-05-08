@@ -31,7 +31,11 @@ const StatusBar = ({title, current, target, config}:{title:string, current:numbe
 
     return (
         <View className={'my-2'}>
-            <View className={'flex-row items-center justify-between'}>
+            <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+            }}>
                 <Text className={'text-white text-base'}>{title}</Text>
                 <Text className={'text-white text-base'}>{_target}</Text>
             </View>
