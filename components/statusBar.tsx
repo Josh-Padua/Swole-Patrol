@@ -35,8 +35,8 @@ const StatusBar = ({title, current, target, config}:{title:string, current:numbe
         setIsEditing(true);
 
         // Set focus
-        if (inputRef && inputRef.current)
-            inputRef.current.focus();
+        if (inputRef)
+            inputRef.current?.focus();
     };
 
     const handleBlur = () => {
