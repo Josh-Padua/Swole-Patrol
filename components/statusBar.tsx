@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
+import {View, Text, TouchableOpacity, TextInput} from 'react-native';
 
 
 type barConfig = {
@@ -12,6 +12,9 @@ type barConfig = {
 const StatusBar = ({title, current, target, config}:{title:string, current:number, target: number, config:barConfig}) => {
     const [_current, setCurrent] = useState(current);
     const [_target, setTarget] = useState(target);
+    const [isEditing, setIsEditing] = useState(false);
+    const inputRef = useRef<TextInput>(null);
+
 
     const GOAL_COLORS = {
         COMPLETE: config.foregroundColor, // or '#02c73d',
@@ -26,6 +29,28 @@ const StatusBar = ({title, current, target, config}:{title:string, current:numbe
         setCurrent(current);
         setTarget(target);
     }, [current, target]);
+
+
+    const handlePress = () => {
+        setIsEditing(true);
+
+        // Set focus
+        if (inputRef && inputRef.current)
+            inputRef.current.focus();
+    };
+
+    const handleBlur = () => {
+        setIsEditing(false);
+    };
+
+    const handleChangeText = (text: string) => {
+        const parsedValue = parseFloat(text);
+
+        if (!isNaN(parsedValue))
+            setTarget(parsedValue);
+        else
+            setTarget(0);
+    };
 
 
     function getPercentage():number {
@@ -43,10 +68,23 @@ const StatusBar = ({title, current, target, config}:{title:string, current:numbe
                 justifyContent: 'space-between'
             }}>
                 <Text className={'text-white text-base'}>{title}</Text>
-                <Text style={{
-                    color: ((getPercentage() > 99.9) ? GOAL_COLORS.COMPLETE : GOAL_COLORS.IN_PROGRESS),
-                    fontSize: 16
-                }}>{_target}</Text>
+                {isEditing ? (
+                    <TextInput
+                        ref={inputRef}
+                        className={'text-white text-base'}
+                        value={isNaN(_target) ? '' : _target.toString()} // Value is required to be string
+                        onChangeText={handleChangeText}
+                        keyboardType="numeric"
+                        onBlur={handleBlur}
+                    />
+                ) : (
+                    <TouchableOpacity onPress={handlePress}>
+                        <Text style={{
+                            color: ((getPercentage() > 99.9) ? GOAL_COLORS.COMPLETE : GOAL_COLORS.IN_PROGRESS),
+                            fontSize: 16
+                        }}>{_target}</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
             <View style={{
