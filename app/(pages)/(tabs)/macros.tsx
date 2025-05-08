@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react'
 import { View, Text, TextInput, Button, FlatList, TouchableOpacity } from 'react-native'
 import {queryMeals, getPossibleMatches, getMeal, addNewMeal, MealData, MacronutrientProfile} from "../../api/meal-macros-library";
 import {getMacros, setMacros} from "../../api/user-macros";
+import StatusBar from "../../../components/statusBar";
 
 
 let mealSet:MealData[] = [];
@@ -15,6 +16,8 @@ const Macros = () => {
     const [consumedProtein, setConsumedProtein] = useState(0);
     const [consumedCarbs, setConsumedCarbs] = useState(0);
     const [consumedFat, setConsumedFat] = useState(0);
+
+    const STATUS_BAR_HEIGHT:number = 20;
 
 
     /**
@@ -148,8 +151,51 @@ const Macros = () => {
                 <Button title="Submit" onPress={handleSubmit} />
             </View>
 
+            <View className={'bg-[#2D2E31] p-5 rounded-lg w-80 max-w-md mb-5'}>
+                <Text className={'text-white font-bold text-2xl my-5'}>Today's Intake</Text>
+                <StatusBar
+                    title='Calories:'
+                    current={consumedCalories}
+                    target={2400}
+                    config={{
+                        height: STATUS_BAR_HEIGHT,
+                        foregroundColor: '#fae125',
+                        backgroundColor: '#bdb262'
+                    }}
+                />
+                <StatusBar
+                    title='Protein:'
+                    current={consumedProtein}
+                    target={80}
+                    config={{
+                        height: STATUS_BAR_HEIGHT,
+                        foregroundColor: '#ff0f27',
+                        backgroundColor: '#c9404e'
+                    }}
+                />
+                <StatusBar
+                    title='Carbohydrates:'
+                    current={consumedCarbs}
+                    target={400}
+                    config={{
+                        height: STATUS_BAR_HEIGHT,
+                        foregroundColor: '#1443ff',
+                        backgroundColor: '#364685'
+                    }}
+                />
+                <StatusBar
+                    title='Fats:'
+                    current={consumedFat}
+                    target={90}
+                    config={{
+                        height: STATUS_BAR_HEIGHT,
+                        foregroundColor: '#19fc30',
+                        backgroundColor: '#3dba4a'
+                    }}
+                />
+            </View>
+
             <View className={'items-start w-80 max-w-md'}>
-                <Text className={'text-white text-2xl m-5'}>Consumed:</Text>
                 <Text className={'text-white text-base'}>Calories: {consumedCalories}</Text>
                 <Text className={'text-white text-base'}>Protein: {consumedProtein} g</Text>
                 <Text className={'text-white text-base'}>Carbohydrate: {consumedCarbs} g</Text>
