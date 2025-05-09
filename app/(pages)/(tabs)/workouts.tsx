@@ -163,6 +163,9 @@ const Workouts = () => {
 
         setLoading(true);
         try {
+            setCurrentWorkout('');
+            setExercises([]);
+
             const workoutDocRef = doc(db, `users/${userData.userId}/workouts`, dateString);
             const workoutDoc = await getDoc(workoutDocRef);
 
@@ -189,6 +192,8 @@ const Workouts = () => {
     const loadWorkout = (workout: any) => {
         if (!workout || !workout.workoutName || !workout.exercises) {
             console.log("Invalid workout data:", workout);
+            setCurrentWorkout('');
+            setExercises([]);
             return;
         }
 
