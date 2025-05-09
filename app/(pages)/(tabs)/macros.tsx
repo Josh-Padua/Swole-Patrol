@@ -3,10 +3,13 @@ import { View, Text, TextInput, Button, FlatList, TouchableOpacity } from 'react
 import {queryMeals, getPossibleMatches, getMeal, addNewMeal, MealData, MacronutrientProfile} from "../../api/meal-macros-library";
 import {getMacros, setMacros} from "../../api/user-macros";
 import StatusBar from "../../../components/statusBar";
+import {setGoals} from "../../api/user-macro-goals";
 
 
 let mealSet:MealData[] = [];
+
 const BUTTON_COLOR = '#ff5400'
+const STATUS_BAR_HEIGHT:number = 20;
 
 
 const Macros = () => {
@@ -17,8 +20,10 @@ const Macros = () => {
     const [consumedProtein, setConsumedProtein] = useState(0);
     const [consumedCarbs, setConsumedCarbs] = useState(0);
     const [consumedFat, setConsumedFat] = useState(0);
-
-    const STATUS_BAR_HEIGHT:number = 20;
+    const [calorieTarget, setCalorieTarget] = useState(2200);
+    const [proteinTarget, setProteinTarget] = useState(80);
+    const [carbTarget, setCarbTarget] = useState(300);
+    const [fatTarget, setFatTarget] = useState(85);
 
 
     /**
@@ -39,6 +44,24 @@ const Macros = () => {
 
         loadData();
     }, []);
+
+    /**
+     * Update macro targets.
+     * On target update.
+     */
+    useEffect( () => {
+        // Allows for data persistence
+        const updateTargets = async () => {
+            await setGoals({
+                calories: calorieTarget,
+                protein: proteinTarget,
+                carbohydrates: carbTarget,
+                fats: fatTarget
+            });
+        };
+
+        updateTargets();
+    }, [calorieTarget, proteinTarget, carbTarget, fatTarget]);
 
 
     async function updateMacros(macros:MacronutrientProfile):Promise<void> {
@@ -161,7 +184,8 @@ const Macros = () => {
                 <StatusBar
                     title='Calories:'
                     current={consumedCalories}
-                    target={2400}
+                    target={calorieTarget}
+                    targetUpdateAction={setCalorieTarget}
                     config={{
                         height: STATUS_BAR_HEIGHT,
                         foregroundColor: '#fae125',
@@ -171,7 +195,8 @@ const Macros = () => {
                 <StatusBar
                     title='Protein:'
                     current={consumedProtein}
-                    target={80}
+                    target={proteinTarget}
+                    targetUpdateAction={setProteinTarget}
                     config={{
                         height: STATUS_BAR_HEIGHT,
                         foregroundColor: '#ff0f27',
@@ -181,7 +206,8 @@ const Macros = () => {
                 <StatusBar
                     title='Carbohydrates:'
                     current={consumedCarbs}
-                    target={400}
+                    target={carbTarget}
+                    targetUpdateAction={setCarbTarget}
                     config={{
                         height: STATUS_BAR_HEIGHT,
                         foregroundColor: '#1443ff',
@@ -191,7 +217,8 @@ const Macros = () => {
                 <StatusBar
                     title='Fats:'
                     current={consumedFat}
-                    target={90}
+                    target={fatTarget}
+                    targetUpdateAction={setFatTarget}
                     config={{
                         height: STATUS_BAR_HEIGHT,
                         foregroundColor: '#19fc30',

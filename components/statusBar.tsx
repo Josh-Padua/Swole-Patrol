@@ -9,7 +9,7 @@ type barConfig = {
 };
 
 
-const StatusBar = ({title, current, target, config}:{title:string, current:number, target: number, config:barConfig}) => {
+const StatusBar = ({title, current, target, targetUpdateAction, config}:{title:string, current:number, target: number, targetUpdateAction:(newTarget:number) => void, config:barConfig}) => {
     const [_current, setCurrent] = useState(current);
     const [_target, setTarget] = useState(target);
     const [isEditing, setIsEditing] = useState(false);
@@ -45,8 +45,14 @@ const StatusBar = ({title, current, target, config}:{title:string, current:numbe
         setIsEditing(true);
     };
 
+    /**
+     * Finished updating the target value.
+     * This triggers the update target action.
+     */
     const handleBlur = () => {
         setIsEditing(false);
+
+        targetUpdateAction(_target);
     };
 
     /**
