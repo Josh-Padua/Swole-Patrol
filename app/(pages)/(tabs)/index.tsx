@@ -9,13 +9,15 @@ import {
     View
 } from "react-native";
 import {BarChart, LineChart} from "react-native-chart-kit";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useCallback} from "react";
 import {addDoc, collection} from "firebase/firestore";
 import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
-import {getMacros} from "@/app/api/user-macros";
+import {getMacros, setMacros} from "@/app/api/user-macros";
 import firebase from "firebase/compat";
 import {router} from "expo-router";
+import {MacronutrientProfile} from "@/app/api/meal-macros-library";
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Index() {
     const screenWidth = Dimensions.get('window').width;
@@ -55,21 +57,21 @@ export default function Index() {
         }
     }
 
-    useEffect(() => {
-
-        const loadData = async () => {
-            const macros = await getMacros();
-            if (macros) {
-                setKCal(macros.calories);
-                setProtein(macros.protein);
-                setCarbs(macros.carbohydrates);
-                setFats(macros.fats);
-            }
-        };
-
-        loadData();
+    useFocusEffect(
+        useCallback(() => {
+            const loadData = async () => {
+                const macros = await getMacros();
+                if (macros) {
+                    setKCal(macros.calories);
+                    setProtein(macros.protein);
+                    setCarbs(macros.carbohydrates);
+                    setFats(macros.fats);
+                }
+            };
+            loadData();
+        }, [])
         // Learn how to prompt rereading after user updates what they eat.
-    })
+    )
 
     return (
         <SafeAreaView className="items-center bg-primary-background h-full pb-10">

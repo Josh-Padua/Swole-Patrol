@@ -1,15 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {View, Text, SafeAreaView, Image, Button, TouchableOpacity, Dimensions, ScrollView} from 'react-native';
 import { Link } from 'expo-router';
 import images from "@/constants/images";
 import { BarChart} from "react-native-chart-kit";
 import {useAuth} from "@/app/(auth)/AuthProvider";
+import {useFocusEffect} from "@react-navigation/native";
+import {getDoc, doc} from "firebase/firestore";
+import { db } from '@/config/firebase';
 
 const Profile = () => {
-    const { signOut, userData } = useAuth();
+    const { signOut, user } = useAuth();
+    const [userData, setUserData] = useState(null);
+
+    useFocusEffect(
+        useCallback(() => {
+            const fetchUserData = async () => {
+                if (user) {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+                    if (userDoc.exists()) {
+                        setUserData(userDoc.data());
+                    } else {
+                        console.error('User not found.');
+                    }
+                }
+            };
+
+            fetchUserData();
+        }, [user])
+    );
 
     return (
-        <SafeAreaView className="items-center bg-primary-background h-full pb-10">
+        <SafeAreaView className="items-center bg-primary-background h-full pb-10 max-w-screen">
             <ScrollView className="pb-5">
             { userData && (
                 <View className="items-center">
