@@ -17,8 +17,10 @@ import {db} from '@/config/firebase';
 
 const Workouts = () => {
     const {userData} = useAuth();
-    const day = new Date().toLocaleDateString('en-US', {weekday: 'long'});
-    const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+    // const day = new Date().toLocaleDateString('en-US', {weekday: 'long'});
+    // const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+    const [day, setDay] = useState(new Date().toLocaleDateString('en-US', {weekday: 'long'}));
+    const [date, setDate] = useState(new Date().toLocaleDateString('en-GB').replace(/\//g, '-'));
     const [currentWorkout, setCurrentWorkout] = useState('Push');
     const [exercises, setExercises] = useState<{
         id: number;
@@ -28,7 +30,9 @@ const Workouts = () => {
     const [saving, setSaving] = useState(false);
     const [templates, setTemplates] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [showTemplates, setShowTemplates] = useState(false);
+    const [showTemplates, setShowTemplates] = useState(false)
+
+
 
     const addSet = (exerciseId: number) => {
         setExercises((prev) => {
@@ -142,12 +146,50 @@ const Workouts = () => {
         setShowTemplates(false);
     };
 
+    const fetchWorkout = async () => {
+        if (!userData || !userData.userId) return;
 
-    useEffect(() => {
-        addExercise(1, "Exercise 1");
-        addExercise(2, "Exercise 2");
-        addExercise(3, "Exercise 3");
-    }, []);
+        setLoading(true);
+        try {
+            const workoutRef = collection(db, `users/${userData.userId}/workouts/${date}`);
+            const snapshot = await getDocs(workoutRef);
+            const workoutData = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+
+            console.log("Fetched templates:", workoutData);
+            setTemplates(workoutData);
+
+        } catch (error) {
+            console.error("Error fetching workout templates:", error);
+        }
+        setLoading(false);
+    };
+
+    const loadWorkout = (workout: any) => {
+        setCurrentWorkout(workout.workoutName);
+
+        const initializedExercises = workout.exercises.map((ex: any, index: number) => {
+            // const sets = Array(ex.defaultSets || 0).fill({weight: 0, reps: 0});
+            return {
+                id: ex.id || index + 1,
+                name: ex.name || `Exercise ${index + 1}`,
+                sets: ex.sets || [],
+            };
+        });
+
+        setExercises(initializedExercises);
+        setShowTemplates(false);
+    };
+
+
+
+    // useEffect(() => {
+    //     addExercise(1, "Exercise 1");
+    //     addExercise(2, "Exercise 2");
+    //     addExercise(3, "Exercise 3");
+    // }, []);
 
     return (
         <SafeAreaView className="bg-primary-background h-full" style={{paddingBottom: 210}}>
