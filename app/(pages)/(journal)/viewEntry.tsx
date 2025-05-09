@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, LayoutAnimation, UIManager, Platform, TextInput} from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, LayoutAnimation, UIManager, Platform, TextInput, SafeAreaView} from 'react-native';
 import {collection, getDocs, deleteDoc, updateDoc, doc, onSnapshot} from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
@@ -7,7 +7,7 @@ import { query, where } from 'firebase/firestore';
 import { AntDesign } from '@expo/vector-icons';
 import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
+import {router} from "expo-router";
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -93,8 +93,9 @@ export default function ViewEntries() {
     }
 
     return (
-        <ScrollView style={{ padding: 20 }}>
-            <Text style={{ fontSize: 24, marginBottom: 20 }}>Previous Entries</Text>
+        <SafeAreaView className="h-full bg-primary-background">
+        <ScrollView className="p-10">
+            <Text className="text-2xl mb-5 text-white text-center">Previous Entries</Text>
             {entries.map((entry) => {
                 const isExpanded = entry.id === expandedId;
                 const isEditing = entry.id === editingId;
@@ -102,24 +103,15 @@ export default function ViewEntries() {
                 return (
                     <View
                         key={entry.id}
-                        style={{
-                            marginBottom: 15,
-                            borderBottomWidth: 1,
-                            borderBottomColor: '#ccc',
-                            paddingBottom: isExpanded ? 15 : 10,
-                        }}
+                        className="mb-3.5 border-b border-b-white pb-1.5"
                     >
                         <TouchableOpacity
                             onPress={() => toggleExpand(entry.id)}
-                            style={{
-                                flexDirection: 'row',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                            }}
+                            className="flex-row justify-between items-center"
                         >
                             <View>
-                                <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{entry.title}</Text>
-                                <Text style={{ color: '#666' }}>
+                                <Text className="font-lato-bold text-xl text-accent-orange">{entry.title}</Text>
+                                <Text className="text-white">
                                     {entry.date ? formatDate(entry.date) : 'No Date'}
                                 </Text>
                             </View>
@@ -127,44 +119,35 @@ export default function ViewEntries() {
                         </TouchableOpacity>
 
                         {isExpanded && (
-                            <View style={{ marginTop: 10 }}>
+                            <View className="mt-2.5">
                                 {isEditing ? (
                                     <>
                                         <TextInput
                                             multiline
                                             value={editContent}
                                             onChangeText={setEditContent}
-                                            style={{
-                                                borderColor: '#ccc',
-                                                borderWidth: 1,
-                                                borderRadius: 6,
-                                                padding: 10,
-                                                minHeight: 80,
-                                                textAlignVertical: 'top',
-                                                backgroundColor: '#fff',
-                                                marginBottom: 10,
-                                            }}
+                                            className="border-1 rounded-md p-2.5 min-h-20 align-text-top bg-white mb-2.5"
                                         />
-                                        <View style={{ flexDirection: 'row', gap: 16 }}>
+                                        <View className="flex-row gap-4">
                                             <TouchableOpacity onPress={() => handleSaveEdit(entry.id)}>
-                                                <Text style={{ color: 'green', fontWeight: '600' }}>Save</Text>
+                                                <Text className="text-accent-green font-lato">Save</Text>
                                             </TouchableOpacity>
                                             <TouchableOpacity onPress={() => setEditingId(null)}>
-                                                <Text style={{ color: 'gray', fontWeight: '600' }}>Cancel</Text>
+                                                <Text className="text-red-500 font-lato">Cancel</Text>
                                             </TouchableOpacity>
                                         </View>
                                     </>
                                 ) : (
                                     <>
-                                        <Text style={{ color: '#444', lineHeight: 20 }}>{entry.content}</Text>
-                                        <View style={{ flexDirection: 'row', gap: 16, marginTop: 10 }}>
+                                        <Text className="text-white font-lato">{entry.content}</Text>
+                                        <View className="flex-row gap-4 mt-2.5">
                                             <TouchableOpacity
                                                 onPress={() => {
                                                     setEditingId(entry.id);
                                                     setEditContent(entry.content);
                                                 }}
                                             >
-                                                <Ionicons name="create-outline" size={20} color="#007AFF" />
+                                                <Ionicons name="create-outline" size={20} color="#63ca53"/>
                                             </TouchableOpacity>
                                             <TouchableOpacity onPress={() => handleDelete(entry.id)}>
                                                 <Ionicons name="trash-outline" size={20} color="#FF3B30" />
@@ -177,6 +160,11 @@ export default function ViewEntries() {
                     </View>
                 );
             })}
+            <TouchableOpacity onPress={() => router.back()}
+                              className="bg-accent-orange py-3 ml-96 mr-96 px-6 rounded-lg items-center mt-5">
+                <Text className="font-lato text-white">Return</Text>
+            </TouchableOpacity>
         </ScrollView>
+        </SafeAreaView>
     );
 }
