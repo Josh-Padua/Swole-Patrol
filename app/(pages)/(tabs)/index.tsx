@@ -1,5 +1,4 @@
 import {
-    Alert,
     Dimensions,
     SafeAreaView,
     ScrollView,
@@ -10,14 +9,50 @@ import {
 } from "react-native";
 import {BarChart, LineChart} from "react-native-chart-kit";
 import React, {useEffect, useState, useCallback} from "react";
-import {addDoc, collection} from "firebase/firestore";
+import {addDoc, collection, getDocs, onSnapshot, orderBy, query, where} from "firebase/firestore";
 import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
 import {getMacros, setMacros} from "@/app/api/user-macros";
-import firebase from "firebase/compat";
 import {router} from "expo-router";
-import {MacronutrientProfile} from "@/app/api/meal-macros-library";
 import { useFocusEffect } from '@react-navigation/native';
+import {DocumentData} from "@firebase/firestore";
+
+type weightEntry = {
+    date: Date;
+    weight: number;
+}
+
+function unpackData(rawData:DocumentData):weightEntry[] {
+    return Object.entries(rawData).map(([date, weight]) => ({
+        date: new Date(date),
+        weight,
+    }));
+}
+
+async function getWeightEntries():Promise<weightEntry[]> {
+    const user = getAuth().currentUser;
+    if (!user) return [];
+
+    const q = query(
+        collection(db, 'userStats'),
+        where('uid', '==', user.uid)
+    );
+
+    const snapshot = await getDocs(q);
+
+    const entries: weightEntry[] = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+            date: data.date.toDate?.() || new Date(data.date),
+            weight: data.weight,
+        }
+    })
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    console.log(entries);
+    return entries;
+
+}
 
 export default function Index() {
     const screenWidth = Dimensions.get('window').width;
@@ -28,9 +63,21 @@ export default function Index() {
     const [carbs, setCarbs] = useState(0);
     const [fats, setFats] = useState(0);
 
+    const [entries, setEntries] = useState<weightEntry[]>([]);
+
+    const chartData = {
+        labels: entries.map(entry => entry.date.toLocaleDateString()),
+        datasets : [
+            {
+                data: entries.map(entry => entry.weight),
+            }
+        ]
+    }
+
+
     const handleGoalUpdate = async () => {
         if (weight === 0) {
-            Alert.alert('Error', 'Please enter a valid weight.');
+            console.log('Error', 'Please enter a valid weight.');
             return;
         }
 
@@ -39,27 +86,32 @@ export default function Index() {
             const user = auth.currentUser;
 
             if (!user) {
-                Alert.alert('Error', 'User not logged in.');
+                console.log('Error', 'User not logged in.');
                 return;
             }
 
             await addDoc(collection(db, 'userStats'), {
                 weight: weight,
-                date: new Date(), // Save as real Date object (Timestamp in Firestore)
+                date: new Date(),
                 uid: user.uid,
+                // adding data as a new entry to firebase
             });
 
-            Alert.alert('Success', 'Weight Updated.');
-            setWeight(0);
+            const updatedEntries = await getWeightEntries();
+            setEntries(updatedEntries);
+
+            console.log('Success', 'Weight Updated.');
+            setWeight(0); // reset the input field
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'Could not update weight.');
+            console.log('Error', 'Could not update weight.');
         }
     }
 
     useFocusEffect(
         useCallback(() => {
             const loadData = async () => {
+
                 const macros = await getMacros();
                 if (macros) {
                     setKCal(macros.calories);
@@ -67,10 +119,12 @@ export default function Index() {
                     setCarbs(macros.carbohydrates);
                     setFats(macros.fats);
                 }
+
+                const weightData = await getWeightEntries();
+                setEntries(weightData);
             };
             loadData();
         }, [])
-        // Learn how to prompt rereading after user updates what they eat.
     )
 
     return (
@@ -108,17 +162,11 @@ export default function Index() {
                 <View className="w-full px-4 bg-primary rounded-lg items-center mt-5">
                     <Text className="text-white text-lg font-lato-bold mb-4 mt-2">Weight-Over-Time</Text>
                     <LineChart
-                        data={{
-                            labels: [],
-                            datasets: [
-                                {
-                                    data: [70, 80, 90, 100],
-                                }
-                            ]
-                        }}
+                        data={chartData}
                         width={screenWidth - 40}
                         height={300}
                         yAxisSuffix=" kg"
+                        fromZero
                         chartConfig={{
                             backgroundColor: '#2D2E31',
                             backgroundGradientFrom: '#2D2E31',

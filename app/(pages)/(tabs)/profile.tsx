@@ -54,7 +54,7 @@ const Profile = () => {
                         </View>
                     </View>
 
-                    <View className="bg-primary rounded-lg p-6 mt-6 mb-6 w-full items-center">
+                    <View className="bg-primary rounded-lg p-6 mt-6 mb-6 w-full items-center max-w-64">
                         <Text className="font-lato-semibold text-xl text-white mb-4">Statistics</Text>
                         <View className="self-start">
                             <Text className="font-lato-medium mt-2 text-white">Dead lift: 300 kg</Text>
