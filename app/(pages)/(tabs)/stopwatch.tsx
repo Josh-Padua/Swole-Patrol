@@ -59,12 +59,12 @@ export default function StopwatchWithLaps() {
                     {formatTime(secondsElapsed, millisecondsElapsed)}
                 </Text>
                 <View className="flex-row gap-2.5 mb-5">
-                    <TouchableOpacity onPress={isRunning ? stop : start} className="bg-accent-orange py-2 px-4 rounded-lg">
+                    <TouchableOpacity onPress={isRunning ? stop : start} className={`py-2 px-4 rounded-lg ${isRunning ? 'bg-accent-red' : 'bg-accent-green'}`}>
                         <Text className="text-white font-lato-semibold">{isRunning ? 'Pause' : 'Start'}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={lap} disabled={!isRunning}
-                                      className={`py-2 px-4 rounded-lg ${isRunning ? 'bg-white' : 'bg-accent-orange'}`}>
-                        <Text className={`font-lato-semibold ${isRunning ? 'text-accent-orange' : 'text-white'}`}>LAP</Text>
+                                      className={`py-2 px-4 rounded-lg ${isRunning ? 'bg-white' : 'bg-primary'}`}>
+                        <Text className={`font-lato-semibold ${isRunning ? 'text-black' : 'text-white'}`}>LAP</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={reset} className="bg-accent-orange py-2 px-4 rounded-lg">
                         <Text className="text-white font-lato-semibold">Reset</Text>
