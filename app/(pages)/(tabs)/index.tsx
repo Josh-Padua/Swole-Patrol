@@ -20,17 +20,11 @@ import {DocumentData} from "@firebase/firestore";
 type weightEntry = {
     date: Date;
     weight: number;
-}
-
-function unpackData(rawData:DocumentData):weightEntry[] {
-    return Object.entries(rawData).map(([date, weight]) => ({
-        date: new Date(date),
-        weight,
-    }));
+    // type to store weights from firebase
 }
 
 async function getWeightEntries():Promise<weightEntry[]> {
-    const user = getAuth().currentUser;
+    const user = getAuth().currentUser; // weights for each user
     if (!user) return [];
 
     const q = query(
@@ -128,8 +122,8 @@ export default function Index() {
     )
 
     return (
-        <SafeAreaView className="items-center bg-primary-background h-full pb-10">
-            <ScrollView className="pb-5">
+        <SafeAreaView className="items-center bg-primary-background h-full pb-10 max-w-screen">
+            <ScrollView className="pb-5" showsVerticalScrollIndicator={false}>
             <View className="flex-1 items-center">
                 <Text className="text-3xl font-bold text-white font-lato-bold mb-5">Home</Text>
                 <View className="w-full px-4 bg-primary rounded-lg items-center">
@@ -143,7 +137,7 @@ export default function Index() {
                                 },
                             ],
                         }}
-                        width={screenWidth - 40}
+                        width={screenWidth - 300}
                         height={300}
                         fromZero
                         chartConfig={{

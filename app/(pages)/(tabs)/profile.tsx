@@ -32,7 +32,7 @@ const Profile = () => {
 
     return (
         <SafeAreaView className="items-center bg-primary-background h-full pb-10 max-w-screen">
-            <ScrollView className="pb-5">
+            <ScrollView className="pb-5" showsVerticalScrollIndicator={false}>
             { userData && (
                 <View className="items-center">
                     <Image source={images.avatar} className="w-10 h-10 rounded-full mt-10 mb-2.5"/>
