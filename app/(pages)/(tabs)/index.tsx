@@ -137,7 +137,7 @@ export default function Index() {
                                 },
                             ],
                         }}
-                        width={screenWidth - 300}
+                        width={screenWidth - 100}
                         height={300}
                         fromZero
                         chartConfig={{
