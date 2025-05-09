@@ -2,9 +2,14 @@ import React, {useEffect, useState} from 'react'
 import { View, Text, TextInput, Button, FlatList, TouchableOpacity } from 'react-native'
 import {queryMeals, getPossibleMatches, getMeal, addNewMeal, MealData, MacronutrientProfile} from "../../api/meal-macros-library";
 import {getMacros, setMacros} from "../../api/user-macros";
+import StatusBar from "../../../components/statusBar";
+import {setGoals} from "../../api/user-macro-goals";
 
 
 let mealSet:MealData[] = [];
+
+const BUTTON_COLOR = '#ff5400'
+const STATUS_BAR_HEIGHT:number = 20;
 
 
 const Macros = () => {
@@ -15,6 +20,10 @@ const Macros = () => {
     const [consumedProtein, setConsumedProtein] = useState(0);
     const [consumedCarbs, setConsumedCarbs] = useState(0);
     const [consumedFat, setConsumedFat] = useState(0);
+    const [calorieTarget, setCalorieTarget] = useState(2200);
+    const [proteinTarget, setProteinTarget] = useState(80);
+    const [carbTarget, setCarbTarget] = useState(300);
+    const [fatTarget, setFatTarget] = useState(85);
 
 
     /**
@@ -35,6 +44,24 @@ const Macros = () => {
 
         loadData();
     }, []);
+
+    /**
+     * Update macro targets.
+     * On target update.
+     */
+    useEffect( () => {
+        // Allows for data persistence
+        const updateTargets = async () => {
+            await setGoals({
+                calories: calorieTarget,
+                protein: proteinTarget,
+                carbohydrates: carbTarget,
+                fats: fatTarget
+            });
+        };
+
+        updateTargets();
+    }, [calorieTarget, proteinTarget, carbTarget, fatTarget]);
 
 
     async function updateMacros(macros:MacronutrientProfile):Promise<void> {
@@ -145,16 +172,67 @@ const Macros = () => {
                     </View>
                 )}
 
-                <Button title="Submit" onPress={handleSubmit} />
+                <Button
+                    color={BUTTON_COLOR}
+                    title="Submit"
+                    onPress={handleSubmit}
+                />
             </View>
 
-            <View className={'items-start w-80 max-w-md'}>
-                <Text className={'text-white text-2xl m-5'}>Consumed:</Text>
-                <Text className={'text-white text-base'}>Calories: {consumedCalories}</Text>
-                <Text className={'text-white text-base'}>Protein: {consumedProtein} g</Text>
-                <Text className={'text-white text-base'}>Carbohydrate: {consumedCarbs} g</Text>
-                <Text className={'text-white text-base'}>Fats: {consumedFat} g</Text>
-                <Button title="Reset" onPress={resetTotals} />
+            <View className={'bg-[#2D2E31] p-5 rounded-lg w-80 max-w-md mb-5'}>
+                <Text className={'text-white font-bold text-2xl my-5'}>Today's Intake</Text>
+                <StatusBar
+                    title='Calories'
+                    current={consumedCalories}
+                    target={calorieTarget}
+                    targetUpdateAction={setCalorieTarget}
+                    config={{
+                        height: STATUS_BAR_HEIGHT,
+                        foregroundColor: '#fae125',
+                        backgroundColor: '#bdb262'
+                    }}
+                />
+                <StatusBar
+                    title='Protein'
+                    current={consumedProtein}
+                    target={proteinTarget}
+                    targetUpdateAction={setProteinTarget}
+                    config={{
+                        height: STATUS_BAR_HEIGHT,
+                        foregroundColor: '#ff0f27',
+                        backgroundColor: '#c9404e'
+                    }}
+                />
+                <StatusBar
+                    title='Carbohydrates'
+                    current={consumedCarbs}
+                    target={carbTarget}
+                    targetUpdateAction={setCarbTarget}
+                    config={{
+                        height: STATUS_BAR_HEIGHT,
+                        foregroundColor: '#1443ff',
+                        backgroundColor: '#364685'
+                    }}
+                />
+                <StatusBar
+                    title='Fats'
+                    current={consumedFat}
+                    target={fatTarget}
+                    targetUpdateAction={setFatTarget}
+                    config={{
+                        height: STATUS_BAR_HEIGHT,
+                        foregroundColor: '#19fc30',
+                        backgroundColor: '#3dba4a'
+                    }}
+                />
+
+                <View className={'mt-10'}>
+                    <Button
+                        color={BUTTON_COLOR}
+                        title="Reset"
+                        onPress={resetTotals}
+                    />
+                </View>
             </View>
         </View>
     )
