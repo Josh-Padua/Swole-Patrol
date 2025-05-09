@@ -86,7 +86,10 @@ const StatusBar = ({title, current, target, targetUpdateAction, config}:{title:s
                 alignItems: 'center',
                 justifyContent: 'space-between'
             }}>
-                <Text className={'text-white text-base'}>{title}</Text>
+                <View className={'flex-row'}>
+                    <Text className={'text-white text-base'} style={{fontWeight: 500}}>{`${title}: `}</Text>
+                    <Text className={'text-white text-base'}>{_current}</Text>
+                </View>
                 {isEditing ? (
                     <TextInput
                         ref={inputRef}
@@ -100,7 +103,8 @@ const StatusBar = ({title, current, target, targetUpdateAction, config}:{title:s
                     <TouchableOpacity onPress={handlePress}>
                         <Text style={{
                             color: ((getPercentage() > 99.9) ? GOAL_COLORS.COMPLETE : GOAL_COLORS.IN_PROGRESS),
-                            fontSize: 16
+                            fontSize: 16,
+                            fontWeight: 500
                         }}>{_target}</Text>
                     </TouchableOpacity>
                 )}

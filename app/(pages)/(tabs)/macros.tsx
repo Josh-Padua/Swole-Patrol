@@ -182,7 +182,7 @@ const Macros = () => {
             <View className={'bg-[#2D2E31] p-5 rounded-lg w-80 max-w-md mb-5'}>
                 <Text className={'text-white font-bold text-2xl my-5'}>Today's Intake</Text>
                 <StatusBar
-                    title='Calories:'
+                    title='Calories'
                     current={consumedCalories}
                     target={calorieTarget}
                     targetUpdateAction={setCalorieTarget}
@@ -193,7 +193,7 @@ const Macros = () => {
                     }}
                 />
                 <StatusBar
-                    title='Protein:'
+                    title='Protein'
                     current={consumedProtein}
                     target={proteinTarget}
                     targetUpdateAction={setProteinTarget}
@@ -204,7 +204,7 @@ const Macros = () => {
                     }}
                 />
                 <StatusBar
-                    title='Carbohydrates:'
+                    title='Carbohydrates'
                     current={consumedCarbs}
                     target={carbTarget}
                     targetUpdateAction={setCarbTarget}
@@ -215,7 +215,7 @@ const Macros = () => {
                     }}
                 />
                 <StatusBar
-                    title='Fats:'
+                    title='Fats'
                     current={consumedFat}
                     target={fatTarget}
                     targetUpdateAction={setFatTarget}
