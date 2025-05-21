@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import React, { useState } from 'react';
 import {router} from "expo-router";
-import {useAuth} from "@/app/(auth)/AuthProvider";
+import {useAuth} from "@/context/AuthProvider";
 
 const Login = () => {
     const [email, setEmail] = useState('');

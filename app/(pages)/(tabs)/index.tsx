@@ -12,7 +12,7 @@ import React, {useEffect, useState, useCallback} from "react";
 import {addDoc, collection, getDocs, onSnapshot, orderBy, query, where} from "firebase/firestore";
 import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
-import {getMacros, setMacros} from "@/app/api/user-macros";
+import {getMacros, setMacros} from "../../../api/user-macros";
 import {router} from "expo-router";
 import { useFocusEffect } from '@react-navigation/native';
 import {DocumentData} from "@firebase/firestore";
