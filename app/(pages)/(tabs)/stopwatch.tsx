@@ -53,7 +53,7 @@ export default function StopwatchWithLaps() {
     };
 
     return (
-        <ScrollView className="flex-1 justify-center items-center p-5 bg-primary-background">
+        <View className="flex-1 justify-center items-center p-5 bg-primary-background">
             <View className="justify-center items-center">
                 <Text className="text-5xl mb-8 text-white font-lato-bold">
                     {formatTime(secondsElapsed, millisecondsElapsed)}
@@ -84,6 +84,6 @@ export default function StopwatchWithLaps() {
                     </View>
                 )}
             </View>
-        </ScrollView>
+        </View>
     );
 }
