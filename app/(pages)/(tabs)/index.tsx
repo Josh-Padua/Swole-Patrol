@@ -31,7 +31,10 @@ type weightEntry = {
 
 async function getWeightEntries():Promise<weightEntry[]> {
     const user = getAuth().currentUser; // weights for each user
-    if (!user) return [];
+    if (!user) {
+        console.error('No user found!');
+        return [];
+    }
 
     const q = query(
         collection(db, 'userStats'),
@@ -51,7 +54,7 @@ async function getWeightEntries():Promise<weightEntry[]> {
     })
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    console.log(entries);
+    // console.log(entries); // TODO: Remove
     return entries;
 
 }
@@ -127,6 +130,7 @@ export default function Index() {
                 // Weight data.
                 const weightData = await getWeightEntries();
                 setEntries(weightData);
+                console.log(`${entries.length} weight entries\n${entries.map(entry => entry.label).join(', ')}`); // TODO: Remove, for debugging
             };
             loadData();
         }, [])
@@ -143,8 +147,8 @@ export default function Index() {
                         data={macrosBarData}
                         width={screenWidth - 100} // Same width as before
                         height={300} // Same height as before
-                        // `fromZero` equivalent is implicitly handled or use minValue={0}
-                        minValue={0} // Ensure chart starts from zero
+                        // // `fromZero` equivalent is implicitly handled or use minValue={0}
+                        // minValue={0} // Ensure chart starts from zero
 
                         // Background colors - equivalent to backgroundGradientFrom/To in chart-kit
                         // You apply background to the container view, not the chart itself usually
@@ -160,10 +164,10 @@ export default function Index() {
                         // yAxisTextStyle={styles.labelStyle} // Text color for Y-axis labels
                         showYAxisIndices={false} // Hides small ticks on Y-axis
 
-                        // X-axis configuration
-                        // xAxisLabelTextStyle={styles.labelStyle} // Text color for X-axis labels
-                        showXAxisLabels={true} // `withHorizontalLabels` equivalent
-                        // verticalLabelRotation: 0 is default in gifted-charts, no prop needed
+                        // // X-axis configuration
+                        // // xAxisLabelTextStyle={styles.labelStyle} // Text color for X-axis labels
+                        // showXAxisLabels={true} // `withHorizontalLabels` equivalent
+                        // // verticalLabelRotation: 0 is default in gifted-charts, no prop needed
 
                         // Bar specific styling
                         barWidth={40} // Adjust bar width as desired
@@ -188,9 +192,9 @@ export default function Index() {
                         height={300} // Same height as before
                         // `yAxisSuffix` equivalent
                         yAxisLabelSuffix=" kg"
-                        // `fromZero` equivalent
-                        minValue={minWeight > 0 ? minWeight - 1 : 0} // Start slightly below min or from 0
-                        maxValue={maxWeight + 1} // End slightly above max
+                        // // `fromZero` equivalent
+                        // minValue={minWeight > 0 ? minWeight - 1 : 0} // Start slightly below min or from 0
+                        // maxValue={maxWeight + 1} // End slightly above max
 
                         // Background colors - similar to BarChart, apply to container or chart area
                         backgroundColor="#2D2E31" // Colors the chart's plotting area
@@ -202,8 +206,7 @@ export default function Index() {
                         hideDataPoints={false} // Show data point circles
                         dataPointsRadius={4}
                         dataPointsColor="#FF5400"
-                        dataPointsStrokeColor="#fff"
-                        dataPointsStrokeWidth={2}
+                        dataPointsWidth={2}
 
                         // Grid and Axis Styling
                         // `decimalPlaces: 2` in chartConfig -> use noOfSections for `gifted-charts`
@@ -218,8 +221,8 @@ export default function Index() {
                         showVerticalLines={true} // Show vertical grid lines (optional)
                         verticalLinesColor="#404040"
 
-                        // Curve (`bezier` equivalent)
-                        curve // Makes the line smooth
+                        // // Curve (`bezier` equivalent)
+                        // curve // Makes the line smooth
 
                         // Spacing - crucial for horizontal distribution of points
                         initialSpacing={0} // Start data point at Y-axis
