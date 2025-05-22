@@ -8,14 +8,13 @@ import {
     View
 } from "react-native";
 import {BarChart, LineChart} from "react-native-gifted-charts";
-import React, {useEffect, useState, useCallback} from "react";
-import {addDoc, collection, getDocs, onSnapshot, orderBy, query, where} from "firebase/firestore";
+import React, {useState, useCallback} from "react";
+import {addDoc, collection, getDocs, query, where} from "firebase/firestore";
 import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
-import {getMacros, setMacros} from "@/api/user-macros";
+import {getMacros} from "@/api/user-macros";
 import {router} from "expo-router";
 import { useFocusEffect } from '@react-navigation/native';
-import {DocumentData} from "@firebase/firestore";
 
 type barEntry = {
     value: number;
