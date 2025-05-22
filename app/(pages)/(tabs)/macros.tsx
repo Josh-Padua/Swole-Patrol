@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react'
 import { View, Text, TextInput, Button, FlatList, TouchableOpacity } from 'react-native'
-import {queryMeals, getPossibleMatches, getMeal, addNewMeal, MealData, MacronutrientProfile} from "../../api/meal-macros-library";
-import {getMacros, setMacros} from "../../api/user-macros";
-import StatusBar from "../../../components/statusBar";
-import {setGoals} from "../../api/user-macro-goals";
+import {queryMeals, getPossibleMatches, getMeal, addNewMeal, MealData, MacronutrientProfile} from "@/api/meal-macros-library";
+import {getMacros, setMacros} from "@/api/user-macros";
+import StatusBar from "@/components/statusBar";
+import {setGoals} from "@/api/user-macro-goals";
 
 
 let mealSet:MealData[] = [];

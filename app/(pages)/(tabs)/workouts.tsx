@@ -10,7 +10,7 @@ import {
     ActivityIndicator
 } from 'react-native'
 import React, {useEffect, useState} from 'react'
-import {useAuth} from "@/app/(auth)/AuthProvider";
+import {useAuth} from "@/context/AuthProvider";
 import {AntDesign} from "@expo/vector-icons";
 import {collection, doc, getDoc, getDocs, setDoc} from 'firebase/firestore';
 import {db} from '@/config/firebase';

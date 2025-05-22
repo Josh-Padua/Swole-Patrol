@@ -2,7 +2,7 @@ import {SplashScreen, Stack} from "expo-router";
 import "../global.css"
 import { useFonts} from "expo-font";
 import {useEffect} from "react";
-import { AuthProvider } from "@/app/(auth)/AuthProvider";
+import { AuthProvider } from "@/context/AuthProvider";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
