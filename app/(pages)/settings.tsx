@@ -71,6 +71,10 @@ const Settings = () => {
                                   className="bg-accent-orange py-2 px-6 rounded-lg items-center mb-2 mt-1">
                     <Text className="text-white font-lato-bold">Update Details</Text>
                 </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/premium')}
+                                  className="bg-accent-orange py-2 px-6 rounded-lg items-center mb-2 mt-1">
+                    <Text className="text-white font-lato-bold">Upgrade to Premium</Text>
+                </TouchableOpacity>
 
 
                 {/*Return back to Profile page*/}
