@@ -18,7 +18,7 @@ const Settings = () => {
     // function to handle updates after the Update button is pushed
     const handleUpdate = async () => {
         if (!user) {
-            Console.error('No user logged in.');
+            console.error('No user logged in.');
             return;
         }
 
@@ -39,8 +39,8 @@ const Settings = () => {
                 setFirstName('');
                 setLastName('');
                 console.log('Profile details updated successfully.');
-            } catch (error) {
-                console.log('Error', error.message);
+            } catch (error: any) {
+                console.log('Error', error?.message || 'Unknown error');
             }
     }
 

@@ -18,7 +18,11 @@
     "@expo/vector-icons": "^14.0.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
+<<<<<<< HEAD
     "@stripe/stripe-react-native": "^0.47.0",
+=======
+    "@stripe/stripe-react-native": "^0.46.0",
+>>>>>>> 431d8ff6cc14876c430ff0b8abe3c14230e61635
     "expo": "~52.0.43",
     "expo-blur": "~14.0.3",
     "expo-constants": "~17.0.8",
