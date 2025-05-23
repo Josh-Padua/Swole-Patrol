@@ -18,7 +18,7 @@ const Settings = () => {
     // function to handle updates after the Update button is pushed
     const handleUpdate = async () => {
         if (!user) {
-            Console.error('No user logged in.');
+            console.error('No user logged in.');
             return;
         }
 
@@ -40,13 +40,13 @@ const Settings = () => {
                 setLastName('');
                 console.log('Profile details updated successfully.');
             } catch (error) {
-                console.log('Error', error.message);
+                console.log('Error');
             }
     }
 
     return (
         <SafeAreaView className="bg-primary-background h-full">
-            <ScrollView className="flex-col items-center">
+            <ScrollView className="flex-col">
                 <Text className="text-center text-accent-orange font-lato-bold text-2xl mb-1.5">Update Details</Text>
                 <View className="flex-row items-center gap-4">
                     {/*Text fields to enter what User wants to update*/}
@@ -71,11 +71,6 @@ const Settings = () => {
                                   className="bg-accent-orange py-2 px-6 rounded-lg items-center mb-2 mt-1">
                     <Text className="text-white font-lato-bold">Update Details</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/premium')}
-                                  className="bg-accent-orange py-2 px-6 rounded-lg items-center mb-2 mt-1">
-                    <Text className="text-white font-lato-bold">Upgrade to Premium</Text>
-                </TouchableOpacity>
-
 
                 {/*Return back to Profile page*/}
                 <TouchableOpacity onPress={() => router.back()}

@@ -3,7 +3,7 @@ import {View, Text, SafeAreaView, Image, Button, TouchableOpacity, Dimensions, S
 import { Link } from 'expo-router';
 import images from "@/constants/images";
 import { BarChart} from "react-native-chart-kit";
-import {useAuth} from "@/app/(auth)/AuthProvider";
+import {useAuth} from "@/context/AuthProvider";
 import {useFocusEffect} from "@react-navigation/native";
 import {getDoc, doc} from "firebase/firestore";
 import { db } from '@/config/firebase';

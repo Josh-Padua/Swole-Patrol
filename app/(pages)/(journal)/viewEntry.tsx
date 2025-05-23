@@ -9,10 +9,6 @@ import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {router} from "expo-router";
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 const formatDate = (date: Date): string => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');

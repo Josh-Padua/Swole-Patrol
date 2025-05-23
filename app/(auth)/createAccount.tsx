@@ -9,7 +9,7 @@ import {
 import React, { useState } from 'react';
 import {router} from "expo-router";
 import {AntDesign} from "@expo/vector-icons";
-import {useAuth} from "@/app/(auth)/AuthProvider";
+import {useAuth} from "@/context/AuthProvider";
 
 const CreateAccount = () => {
     const [loading, setLoading] = useState(false);
