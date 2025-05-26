@@ -7,34 +7,24 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import {BarChart, LineChart} from "react-native-gifted-charts";
+import {BarChart, LineChart} from "react-native-chart-kit";
 import React, {useState, useCallback} from "react";
 import {addDoc, collection, getDocs, query, where} from "firebase/firestore";
 import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
 import {getMacros} from "@/api/user-macros";
 import {router} from "expo-router";
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 
-type barEntry = {
-    value: number;
-    label: string;
-    barColor: string;
-}
-
-// type to store weights from firebase
 type weightEntry = {
-    weight: number;
     date: Date;
-    label: string;
+    weight: number;
+    // type to store weights from firebase
 }
 
-async function getWeightEntries():Promise<weightEntry[]> {
+async function getWeightEntries(): Promise<weightEntry[]> {
     const user = getAuth().currentUser; // weights for each user
-    if (!user) {
-        console.error('No user found!');
-        return [];
-    }
+    if (!user) return [];
 
     const q = query(
         collection(db, 'userStats'),
@@ -45,16 +35,14 @@ async function getWeightEntries():Promise<weightEntry[]> {
 
     const entries: weightEntry[] = snapshot.docs.map((doc) => {
         const data = doc.data();
-        const date:Date = data.date.toDate?.() || new Date(data.date);
         return {
+            date: data.date.toDate?.() || new Date(data.date),
             weight: data.weight,
-            date: date,
-            label: date.toLocaleDateString('en-GB'),
         }
     })
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    // console.log(entries); // TODO: Remove
+    console.log(entries);
     return entries;
 
 }
@@ -63,21 +51,28 @@ export default function Index() {
     const screenWidth = Dimensions.get('window').width;
     const [weight, setWeight] = useState(0);
 
-    const [macrosBarData, setMacrosBarData] = useState<barEntry[]>([]);
-    const [macrosMaxValueYAxis, setMacrosMaxValueYAxis] = useState(1);
+    const [kCal, setKCal] = useState(0);
+    const [protein, setProtein] = useState(0);
+    const [carbs, setCarbs] = useState(0);
+    const [fats, setFats] = useState(0);
 
     const [entries, setEntries] = useState<weightEntry[]>([]);
-    const [minWeight, setMinWeight] = useState(0);  // In kgs
-    const [maxWeight, setMaxWeight] = useState(90); // In kgs
+
+    const validateChartData = (value: number) => {
+        if (isNaN(value) || !isFinite(value)) return 0;
+        return value;
+    };
 
     const chartData = {
-        labels: entries.map(entry => entry.date.toLocaleDateString()),
-        datasets : [
+        labels: entries.length > 0 ? entries.map(entry => entry.date.toLocaleDateString()) : [''],
+        datasets: [
             {
-                data: entries.map(entry => entry.weight),
+                data: entries.length > 0
+                    ? entries.map(entry => validateChartData(entry.weight))
+                    : [0],
             }
         ]
-    }
+    };
 
 
     const handleGoalUpdate = async () => {
@@ -117,20 +112,16 @@ export default function Index() {
         useCallback(() => {
             const loadData = async () => {
 
-                // Macros data.
                 const macros = await getMacros();
-                setMacrosBarData([
-                    { value: (macros?.calories || 0), label: 'KCal', barColor: '#FF5400' }, // Direct color for bars
-                    { value: (macros?.protein || 0), label: 'Protein', barColor: '#FF5400' },
-                    { value: (macros?.carbohydrates || 0), label: 'Carbs', barColor: '#FF5400' },
-                    { value: (macros?.fats || 0), label: 'Fats', barColor: '#FF5400' },
-                ]);
-                setMacrosMaxValueYAxis(Math.max(...macrosBarData.map(item => item.value)));
+                if (macros) {
+                    setKCal(macros.calories);
+                    setProtein(macros.protein);
+                    setCarbs(macros.carbohydrates);
+                    setFats(macros.fats);
+                }
 
-                // Weight data.
                 const weightData = await getWeightEntries();
                 setEntries(weightData);
-                console.log(`${entries.length} weight entries\n${entries.map(entry => entry.label).join(', ')}`); // TODO: Remove, for debugging
             };
             loadData();
         }, [])
@@ -139,125 +130,84 @@ export default function Index() {
     return (
         <SafeAreaView className="items-center bg-primary-background h-full pb-10 max-w-screen">
             <ScrollView className="pb-5" showsVerticalScrollIndicator={false}>
-            <View className="flex-1 items-center">
-                <Text className="text-3xl font-bold text-white font-lato-bold mb-5">Home</Text>
-                <View className="w-full px-4 bg-primary rounded-lg items-center">
-                    <Text className="text-white text-lg font-lato-bold mb-4 mt-2">Daily Progress</Text>
-                    <BarChart
-                        data={macrosBarData}
-                        width={screenWidth - 100} // Same width as before
-                        height={300} // Same height as before
-                        // // `fromZero` equivalent is implicitly handled or use minValue={0}
-                        // minValue={0} // Ensure chart starts from zero
+                <View className="flex-1 items-center">
+                    <Text className="text-3xl font-bold text-white font-lato-bold mb-5">Home</Text>
+                    <View className="w-full px-4 bg-primary rounded-lg items-center">
+                        <Text className="text-white text-lg font-lato-bold mb-4 mt-2">Daily Progress</Text>
+                        <BarChart
+                            data={{
+                                labels: ['KCal', 'Protein', 'Carbs', 'Fats'],
+                                datasets: [
+                                    {
+                                        data: [validateChartData(kCal), validateChartData(protein), validateChartData(carbs), validateChartData(fats)], // Uses API to take data from Firebase to display
+                                    },
+                                ],
+                            }}
+                            width={screenWidth - 100}
+                            height={300}
+                            fromZero
+                            chartConfig={{
+                                backgroundColor: '#2D2E31',
+                                backgroundGradientFrom: '#2D2E31',
+                                backgroundGradientTo: '#2D2E31',
+                                decimalPlaces: 0,
+                                color: (opacity = 1) => `rgba(255, 84, 0, ${opacity})`,
+                                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                            }}
+                            verticalLabelRotation={0}
+                            showBarTops={false}
+                            withHorizontalLabels
+                            yAxisLabel=""
+                            yAxisSuffix=""
+                        />
+                    </View>
+                    <View className="w-full px-4 bg-primary rounded-lg items-center mt-5">
+                        <Text className="text-white text-lg font-lato-bold mb-4 mt-2">Weight-Over-Time</Text>
+                        <LineChart
+                            data={chartData}
+                            width={screenWidth - 40}
+                            height={300}
+                            yAxisSuffix=" kg"
+                            fromZero
+                            chartConfig={{
+                                backgroundColor: '#2D2E31',
+                                backgroundGradientFrom: '#2D2E31',
+                                backgroundGradientTo: '#2D2E31',
+                                decimalPlaces: 2,
+                                color: (opacity = 1) => `rgba(255, 84, 0, ${opacity})`,
+                                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                            }}
+                            bezier
+                        />
+                    </View>
 
-                        // Background colors - equivalent to backgroundGradientFrom/To in chart-kit
-                        // You apply background to the container view, not the chart itself usually
-                        // Chart background is transparent by default, allowing container background to show
-                        // If you want an inner background for the chart grid area:
-                        backgroundColor="#2D2E31" // This colors the chart's plotting area
-                        // Use a separate View for outer background if needed
+                    <View className="w-full px-4 bg-primary rounded-lg items-center mt-5">
+                        <Text className="text-white text-2xl font-lato-bold mb-10">Update Weight</Text>
+                        <TextInput
+                            placeholder="Enter your weight in Kgs"
+                            placeholderTextColor="#6b7280"
+                            value={weight === 0 ? '' : weight.toString()}
+                            onChangeText={(text) => {
+                                if (!isNaN(parseFloat(text)) && parseFloat(text) > 0) {
+                                    setWeight(parseFloat(text));
+                                } else if (text === '') {
+                                    setWeight(0); // Reset to 0 if the input is cleared
+                                }
+                            }}
+                            keyboardType="numeric"
+                            className="p-3 border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
+                        />
+                        <TouchableOpacity onPress={handleGoalUpdate}
+                                          className="bg-accent-orange py-3 px-6 rounded-lg items-center mb-2">
+                            <Text className="text-white font-lato-bold">Update Weight</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => router.push('/(pages)/weightsPage')}
+                                          className="bg-accent-orange py-3 px-6 rounded-lg items-center mb-2">
+                            <Text className="text-white font-lato-bold">View Weights Log</Text>
+                        </TouchableOpacity>
+                    </View>
 
-                        // Y-axis configuration
-                        noOfSections={5} // Roughly equivalent to decimalPlaces: 0 for integer labels
-                        maxValue={macrosMaxValueYAxis} // Set max value for Y-axis dynamically
-                        yAxisLabelSuffix={''} // No suffix needed as per your original config
-                        // yAxisTextStyle={styles.labelStyle} // Text color for Y-axis labels
-                        showYAxisIndices={false} // Hides small ticks on Y-axis
-
-                        // // X-axis configuration
-                        // // xAxisLabelTextStyle={styles.labelStyle} // Text color for X-axis labels
-                        // showXAxisLabels={true} // `withHorizontalLabels` equivalent
-                        // // verticalLabelRotation: 0 is default in gifted-charts, no prop needed
-
-                        // Bar specific styling
-                        barWidth={40} // Adjust bar width as desired
-                        barBorderRadius={4} // Adds slight curve to bars
-                        // `showBarTops={false}` is tricky. By default, gifted-charts shows bars without top labels.
-                        // If you want to explicitly hide any top labels, don't use `renderTooltip` or `topLabelComponent`
-
-                        // Grid lines and rules
-                        showReferenceLine1={false} // Hides default reference line at 0
-                        hideRules={false} // Shows horizontal grid lines
-                        rulesColor="#404040" // Slightly lighter than background for visibility
-                        rulesLength={screenWidth - 100 - 20} // Adjust grid line length to match chart width - padding
-                        xAxisColor="#a0a0a0" // X-axis line color
-                        yAxisColor="#a0a0a0" // Y-axis line color
-                    />
                 </View>
-                <View className="w-full px-4 bg-primary rounded-lg items-center mt-5">
-                    <Text className="text-white text-lg font-lato-bold mb-4 mt-2">Weight-Over-Time</Text>
-                    <LineChart
-                        data={entries}
-                        width={screenWidth - 40} // Same width as before
-                        height={300} // Same height as before
-                        // `yAxisSuffix` equivalent
-                        yAxisLabelSuffix=" kg"
-                        // // `fromZero` equivalent
-                        // minValue={minWeight > 0 ? minWeight - 1 : 0} // Start slightly below min or from 0
-                        // maxValue={maxWeight + 1} // End slightly above max
-
-                        // Background colors - similar to BarChart, apply to container or chart area
-                        backgroundColor="#2D2E31" // Colors the chart's plotting area
-                        // Use a separate View for outer background if needed
-
-                        // Line styling
-                        color="#FF5400" // `color` from chartConfig, applied directly
-                        thickness={3} // Adjust line thickness
-                        hideDataPoints={false} // Show data point circles
-                        dataPointsRadius={4}
-                        dataPointsColor="#FF5400"
-                        dataPointsWidth={2}
-
-                        // Grid and Axis Styling
-                        // `decimalPlaces: 2` in chartConfig -> use noOfSections for `gifted-charts`
-                        // You might need to manually format labels for precise decimal places if `decimalPlaces` is not enough
-                        // However, gifted-charts often handles floating point values automatically.
-                        noOfSections={5} // Or more, depending on desired Y-axis granularity
-                        rulesColor="#404040" // Grid line color
-                        xAxisColor="#a0a0a0" // X-axis line color
-                        yAxisColor="#a0a0a0" // Y-axis line color
-                        // xAxisLabelTextStyle={styles.labelStyle}
-                        // yAxisLabelTextStyle={styles.labelStyle}
-                        showVerticalLines={true} // Show vertical grid lines (optional)
-                        verticalLinesColor="#404040"
-
-                        // // Curve (`bezier` equivalent)
-                        // curve // Makes the line smooth
-
-                        // Spacing - crucial for horizontal distribution of points
-                        initialSpacing={0} // Start data point at Y-axis
-                        spacing={(screenWidth - 40) / (entries.length - 1)} // Distribute evenly
-                        // If you have many points and need scrolling, use `scrollEnabled` prop
-                    />
-                </View>
-
-                <View className="w-full px-4 bg-primary rounded-lg items-center mt-5">
-                    <Text className="text-white text-2xl font-lato-bold mb-10">Update Weight</Text>
-                    <TextInput
-                        placeholder="Enter your weight in Kgs"
-                        placeholderTextColor="#6b7280"
-                        value={weight === 0 ? '' : weight.toString()}
-                        onChangeText={(text) => {
-                            if (!isNaN(parseFloat(text)) && parseFloat(text) > 0) {
-                                setWeight(parseFloat(text));
-                            } else if (text === '') {
-                                setWeight(0); // Reset to 0 if the input is cleared
-                            }
-                        }}
-                        keyboardType="numeric"
-                        className="p-3 border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
-                    />
-                    <TouchableOpacity onPress={handleGoalUpdate}
-                        className="bg-accent-orange py-3 px-6 rounded-lg items-center mb-2">
-                        <Text className="text-white font-lato-bold">Update Weight</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => router.push('/(pages)/weightsPage')}
-                                      className="bg-accent-orange py-3 px-6 rounded-lg items-center mb-2">
-                        <Text className="text-white font-lato-bold">View Weights Log</Text>
-                    </TouchableOpacity>
-                </View>
-
-            </View>
             </ScrollView>
         </SafeAreaView>
     )
