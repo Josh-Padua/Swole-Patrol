@@ -6,7 +6,7 @@ import {
     signOut,
     User
 } from 'firebase/auth';
-import {auth, db} from '@/config/firebase';
+import {auth, db} from '../config/firebase';
 import {ActivityIndicator, View} from 'react-native';
 import {router} from "expo-router";
 // import {doc, setDoc} from "@firebase/firestore";

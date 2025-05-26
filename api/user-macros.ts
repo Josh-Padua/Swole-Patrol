@@ -1,4 +1,4 @@
-import {auth, db} from '../../config/firebase';
+import {auth, db} from '../config/firebase';
 import {collection, doc, getDoc, setDoc} from 'firebase/firestore';
 import {MacronutrientProfile} from "./meal-macros-library";
 import {User} from "firebase/auth";
