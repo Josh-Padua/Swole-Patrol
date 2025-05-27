@@ -1,15 +1,39 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, LayoutAnimation, UIManager, Platform, TextInput, SafeAreaView} from 'react-native';
-import {collection, getDocs, deleteDoc, updateDoc, doc, onSnapshot} from 'firebase/firestore';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, LayoutAnimation, UIManager, Platform, TextInput, SafeAreaView } from 'react-native';
+import { collection, getDocs, deleteDoc, updateDoc, doc, onSnapshot, query, where, Timestamp } from 'firebase/firestore'; // Import Timestamp
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
-import { query, where } from 'firebase/firestore';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import {router} from "expo-router";
+import { router } from "expo-router";
 
-const formatDate = (date: Date): string => {
+// Enable LayoutAnimation for Android for smooth transitions
+if (Platform.OS === 'android') {
+    // @ts-ignore - UIManager.setLayoutAnimationEnabledExperimental is specific to Android
+    UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// Define the TypeScript interface for a Workout Log Entry
+interface WorkoutLogEntry {
+    id: string;
+    workoutTitle: string;
+    workoutDetails: string;
+    workoutRating: number | string; // Can be number or 'N/A'
+    sleepHours: number | string;   // Can be number or 'N/A'
+    waterIntake: number | string;  // Can be number or 'N/A'
+    date: Date | null;             // Can be a Date object or null
+    uid: string;
+}
+
+// Helper function to format date
+const formatDate = (date: Date | null): string => { // Type the input parameter
+    if (!date) { // Check if date is null or undefined first
+        return 'No Date';
+    }
+    if (!(date instanceof Date) || isNaN(date.getTime())) { // Then check if it's a valid Date object
+        return 'Invalid Date'; // Or 'No Date', depending on desired behavior for invalid Date objects
+    }
+
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
@@ -17,34 +41,49 @@ const formatDate = (date: Date): string => {
 };
 
 export default function ViewEntries() {
-    const [entries, setEntries] = useState<any[]>([]);
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    // Apply the interface to the state type
+    const [entries, setEntries] = useState<WorkoutLogEntry[]>([]);
+    const [expandedId, setExpandedId] = useState<string | null>(null); // Type expandedId as string or null
     const [loading, setLoading] = useState(true);
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editContent, setEditContent] = useState<string>('');
+    const [editingId, setEditingId] = useState<string | null>(null);   // Type editingId as string or null
+    const [editWorkoutDetails, setEditWorkoutDetails] = useState<string>(''); // Type editWorkoutDetails as string
 
     useEffect(() => {
         const auth = getAuth();
-        if (!auth.currentUser) return;
+        const currentUser = auth.currentUser;
 
-        const q = query(collection(db, 'journalEntries'));
+        if (!currentUser) {
+            setLoading(false);
+            return;
+        }
+
+        const q = query(collection(db, 'workoutLogs'), where('uid', '==', currentUser.uid));
 
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
-                const userEntries = snapshot.docs
+                const userEntries: WorkoutLogEntry[] = snapshot.docs // Explicitly type the mapped array
                     .map((doc) => {
                         const data = doc.data();
+                        const firebaseTimestamp = data.date as Timestamp | undefined; // Cast to Timestamp
+                        const dateObject = firebaseTimestamp instanceof Timestamp ? firebaseTimestamp.toDate() : null;
+
                         return {
                             id: doc.id,
-                            title: data.title ?? 'No Title',
-                            content: data.content ?? 'No Content',
-                            date: data.date?.toDate?.(),
-                            uid: data.uid,
+                            workoutTitle: (data.workoutTitle as string) ?? 'No Title',
+                            workoutDetails: (data.workoutDetails as string) ?? 'No Details',
+                            workoutRating: (data.workoutRating as number) ?? 'N/A', // Ensure consistent type or handle conversion
+                            sleepHours: (data.sleepHours as number) ?? 'N/A',
+                            waterIntake: (data.waterIntake as number) ?? 'N/A',
+                            date: dateObject,
+                            uid: (data.uid as string),
                         };
                     })
-                    .filter((entry) => entry.uid === auth.currentUser?.uid)
-                    .sort((a, b) => b.date - a.date); // Optional: sort by date
+                    .sort((a, b) => {
+                        const dateA = a.date ? a.date.getTime() : 0;
+                        const dateB = b.date ? b.date.getTime() : 0;
+                        return dateB - dateA;
+                    });
 
                 setEntries(userEntries);
                 setLoading(false);
@@ -52,115 +91,159 @@ export default function ViewEntries() {
             (error) => {
                 console.error('Error fetching entries:', error);
                 setLoading(false);
+                Alert.alert('Error', 'Could not load workout logs. Please try again.');
             }
         );
 
         return () => unsubscribe();
     }, []);
 
-    const toggleExpand = (id: string) => {
+    const toggleExpand = (id: string) => { // Type id parameter
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setExpandedId((prev) => (prev === id ? null : id));
         setEditingId(null);
     };
 
-    const handleSaveEdit = async (id: string) => {
+    const handleSaveEdit = async (id: string) => { // Type id parameter
         try {
-            await updateDoc(doc(db, 'journalEntries', id), { content: editContent });
+            await updateDoc(doc(db, 'workoutLogs', id), { workoutDetails: editWorkoutDetails });
+
             setEntries((prev) =>
-                prev.map((e) => (e.id === id ? { ...e, content: editContent } : e))
+                prev.map((entry) => (entry.id === id ? { ...entry, workoutDetails: editWorkoutDetails } : entry))
             );
             setEditingId(null);
+            Alert.alert('Success', 'Workout details updated!');
         } catch (error) {
-            console.error('Error saving entry:', error);
+            console.error('Error saving workout details:', error);
+            Alert.alert('Error', 'Could not save workout details. Please try again.');
         }
     };
 
-    const handleDelete = async (id: string) => {
-        try {
-            await deleteDoc(doc(db, 'journalEntries', id));
-        } catch (error) {
-            console.error('Error deleting entry:', error);
-        }
+    const handleDelete = async (id: string) => { // Type id parameter
+        Alert.alert(
+            "Delete Workout Log",
+            "Are you sure you want to delete this workout log entry? This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    onPress: async () => {
+                        try {
+                            await deleteDoc(doc(db, 'workoutLogs', id));
+                            Alert.alert('Success', 'Workout log deleted!');
+                        } catch (error) {
+                            console.error('Error deleting workout log:', error);
+                            Alert.alert('Error', 'Could not delete workout log. Please try again.');
+                        }
+                    },
+                    style: "destructive"
+                }
+            ],
+            { cancelable: true }
+        );
     };
 
     if (loading) {
-        return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;
+        return (
+            <SafeAreaView className="h-full bg-primary-background justify-center items-center">
+                <ActivityIndicator size="large" color="#FF6347" />
+                <Text className="text-white mt-4 font-lato">Loading workout logs...</Text>
+            </SafeAreaView>
+        );
     }
 
     return (
         <SafeAreaView className="h-full bg-primary-background">
-        <ScrollView className="p-10">
-            <Text className="text-2xl mb-5 text-white text-center">Previous Entries</Text>
-            {entries.map((entry) => {
-                const isExpanded = entry.id === expandedId;
-                const isEditing = entry.id === editingId;
+            <ScrollView className="p-4">
+                <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-5">Your Workout Logs</Text>
 
-                return (
-                    <View
-                        key={entry.id}
-                        className="mb-3.5 border-b border-b-white pb-1.5"
-                    >
-                        <TouchableOpacity
-                            onPress={() => toggleExpand(entry.id)}
-                            className="flex-row justify-between items-center"
-                        >
-                            <View>
-                                <Text className="font-lato-bold text-xl text-accent-orange">{entry.title}</Text>
-                                <Text className="text-white">
-                                    {entry.date ? formatDate(entry.date) : 'No Date'}
-                                </Text>
-                            </View>
-                            <AntDesign name={isExpanded ? 'up' : 'down'} size={20} color="#333" />
-                        </TouchableOpacity>
+                {entries.length === 0 ? (
+                    <Text className="text-white text-center text-lg mt-10 font-lato">
+                        No workout logs found. Start by adding one from the home screen!
+                    </Text>
+                ) : (
+                    entries.map((entry: WorkoutLogEntry) => {
+                        const isExpanded = entry.id === expandedId;
+                        const isEditing = entry.id === editingId;
 
-                        {isExpanded && (
-                            <View className="mt-2.5">
-                                {isEditing ? (
-                                    <>
-                                        <TextInput
-                                            multiline
-                                            value={editContent}
-                                            onChangeText={setEditContent}
-                                            className="border-1 rounded-md p-2.5 min-h-20 align-text-top bg-white mb-2.5"
-                                        />
-                                        <View className="flex-row gap-4">
-                                            <TouchableOpacity onPress={() => handleSaveEdit(entry.id)}>
-                                                <Text className="text-accent-green font-lato">Save</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity onPress={() => setEditingId(null)}>
-                                                <Text className="text-red-500 font-lato">Cancel</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Text className="text-white font-lato">{entry.content}</Text>
-                                        <View className="flex-row gap-4 mt-2.5">
-                                            <TouchableOpacity
-                                                onPress={() => {
-                                                    setEditingId(entry.id);
-                                                    setEditContent(entry.content);
-                                                }}
-                                            >
-                                                <Ionicons name="create-outline" size={20} color="#63ca53"/>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity onPress={() => handleDelete(entry.id)}>
-                                                <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-                                            </TouchableOpacity>
-                                        </View>
-                                    </>
+                        return (
+                            <View
+                                key={entry.id}
+                                className="mb-3.5 border border-gray-700 rounded-lg p-3 bg-gray-800"
+                            >
+                                <TouchableOpacity
+                                    onPress={() => toggleExpand(entry.id)}
+                                    className="flex-row justify-between items-center"
+                                >
+                                    <View>
+                                        <Text className="font-lato-bold text-xl text-accent-orange">{entry.workoutTitle}</Text>
+                                        <Text className="text-gray-400 text-sm font-lato">
+                                            {formatDate(entry.date)}
+                                        </Text>
+                                    </View>
+                                    <AntDesign name={isExpanded ? 'up' : 'down'} size={20} color="#FF6347" />
+                                </TouchableOpacity>
+
+                                {isExpanded && (
+                                    <View className="mt-2.5">
+                                        <Text className="text-white font-lato mb-1">
+                                            <Text className="font-lato-bold">Rating:</Text> {entry.workoutRating}/10
+                                        </Text>
+                                        <Text className="text-white font-lato mb-1">
+                                            <Text className="font-lato-bold">Sleep:</Text> {entry.sleepHours} hours
+                                        </Text>
+                                        <Text className="text-white font-lato mb-2">
+                                            <Text className="font-lato-bold">Water:</Text> {entry.waterIntake} Liters
+                                        </Text>
+
+                                        {isEditing ? (
+                                            <>
+                                                <TextInput
+                                                    multiline
+                                                    value={editWorkoutDetails}
+                                                    onChangeText={setEditWorkoutDetails}
+                                                    className="border border-gray-600 rounded-md p-2.5 min-h-20 bg-gray-700 text-white mb-2.5"
+                                                    placeholderTextColor="#A0A0A0"
+                                                    textAlignVertical="top"
+                                                />
+                                                <View className="flex-row gap-4 justify-end">
+                                                    <TouchableOpacity onPress={() => handleSaveEdit(entry.id)} className="bg-accent-green py-2 px-4 rounded-md">
+                                                        <Text className="text-white font-lato text-base">Save</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity onPress={() => setEditingId(null)} className="bg-red-500 py-2 px-4 rounded-md">
+                                                        <Text className="text-white font-lato text-base">Cancel</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Text className="text-white font-lato mb-2">{entry.workoutDetails}</Text>
+                                                <View className="flex-row gap-4 mt-2.5 justify-end">
+                                                    <TouchableOpacity
+                                                        onPress={() => {
+                                                            setEditingId(entry.id);
+                                                            setEditWorkoutDetails(entry.workoutDetails);
+                                                        }}
+                                                    >
+                                                        <Ionicons name="create-outline" size={24} color="#63ca53" />
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity onPress={() => handleDelete(entry.id)}>
+                                                        <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </>
+                                        )}
+                                    </View>
                                 )}
                             </View>
-                        )}
-                    </View>
-                );
-            })}
-            <TouchableOpacity onPress={() => router.back()}
-                              className="bg-accent-orange py-3 ml-96 mr-96 px-6 rounded-lg items-center mt-5">
-                <Text className="font-lato text-white">Return</Text>
-            </TouchableOpacity>
-        </ScrollView>
+                        );
+                    })
+                )}
+                <TouchableOpacity onPress={() => router.back()}
+                                  className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-5 mb-10">
+                    <Text className="font-lato text-white text-base">Return</Text>
+                </TouchableOpacity>
+            </ScrollView>
         </SafeAreaView>
     );
 }
