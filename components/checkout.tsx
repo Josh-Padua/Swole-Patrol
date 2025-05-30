@@ -4,7 +4,7 @@ import React from 'react'
 const Checkout = () => {
     const { initPaymentSheet, presentPaymentSheet } = useStripe();
     const [loading, setLoading] = useState(false);
-
+    const API_URL = 'http://10.0.2.2:3000'
     const fetchPaymentSheetParams = async () => {
         const response = await fetch(`${API_URL}/payment-sheet`, {
             method: 'POST',
@@ -44,6 +44,13 @@ const Checkout = () => {
     };
 
     const openPaymentSheet = async () => {
+        const { error } = await presentPaymentSheet();
+
+        if (error) {
+            console.error(`Error code: ${error.code}`);
+        } else {
+            console.error('Success, your order is confirmed!');
+        }
         // to be implemented
     }
 
