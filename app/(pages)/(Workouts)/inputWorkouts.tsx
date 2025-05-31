@@ -15,6 +15,7 @@ import {AntDesign} from "@expo/vector-icons";
 import {collection, doc, getDoc, getDocs, setDoc} from 'firebase/firestore';
 import {db} from '@/config/firebase';
 import {WorkoutExercise} from "@/types/workout";
+import {router} from "expo-router";
 
 const Workouts = () => {
     const {userData} = useAuth();
@@ -258,7 +259,18 @@ const Workouts = () => {
                             onPress={() => setShowTemplates(false)}
                         />
                         <View className="flex-1 p-4 bg-black/85">
-                            <Text className="m-4 text-white text-xl font-bold">Workout Templates</Text>
+                            <View className="flex-row">
+                                <Text className="m-4 text-white text-xl font-bold">Workout Templates</Text>
+                                <Pressable className="flex-row m-4 absolute right-0" onPress={() =>
+                                {
+                                    setShowTemplates(false);
+                                    router.push('/(pages)/(Workouts)/templateManager')}
+                                }>
+                                    <Text className="text-blue-500 text-xl font-bold mr-2">Add</Text>
+                                    <AntDesign name="pluscircle" size={24} color="#3b82f6"/>
+                                </Pressable>
+                            </View>
+
                             {loading ? (
                                 <View className="h-1/2 w-1/2 justify-center items-center">
                                     <ActivityIndicator size="large" color="white"/>
