@@ -14,6 +14,7 @@ import {useAuth} from "@/context/AuthProvider";
 import {AntDesign} from "@expo/vector-icons";
 import {collection, doc, getDoc, getDocs, setDoc} from 'firebase/firestore';
 import {db} from '@/config/firebase';
+import {WorkoutExercise} from "@/types/workout";
 
 const Workouts = () => {
     const {userData} = useAuth();
@@ -21,11 +22,7 @@ const Workouts = () => {
     const [dayString, setDayString] = useState(new Date().toLocaleDateString('en-US', {weekday: 'long'}));
     const [dateString, setDateString] = useState(new Date().toLocaleDateString('en-GB').replace(/\//g, '-'));
     const [currentWorkout, setCurrentWorkout] = useState('Push');
-    const [exercises, setExercises] = useState<{
-        id: number;
-        name: string;
-        sets: { weight: number; reps: number }[]
-    }[]>([]);
+    const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
     const [saving, setSaving] = useState(false);
     const [templates, setTemplates] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
