@@ -1,5 +1,7 @@
-import {View, Text} from 'react-native'
-import React from 'react'
+import {View, Text, TouchableOpacity} from 'react-native'
+import React, { useState, useEffect } from 'react'
+import {useStripe} from '@stripe/stripe-react-native';
+
 
 const Checkout = () => {
     const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -59,14 +61,15 @@ const Checkout = () => {
     }, []);
 
     return (
-        <Screen>
-            <Button
-                variant="primary"
-                disabled={!loading}
-                title="Checkout"
-                onPress={openPaymentSheet}
-            />
-        </Screen>
+        <TouchableOpacity
+            onPress={openPaymentSheet}
+            disabled={!loading}
+            className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-4"
+        >
+            <Text className="text-white font-lato-bold">
+                Subscribe Now
+            </Text>
+        </TouchableOpacity>
     )
 
 }
