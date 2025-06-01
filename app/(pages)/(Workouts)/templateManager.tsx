@@ -32,6 +32,7 @@ const TemplateManager = () => {
     const [selectedExercises, setSelectedExercises] = React.useState<Exercise[]>([]);
     const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
     const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
+    const [ExerciseTemplates, setExerciseTemplates] = React.useState<ExerciseTemplate[]>([]);
 
     const fetchExercises = async () => {
         setLoading(true);
@@ -61,9 +62,11 @@ const TemplateManager = () => {
                 return newSet;
             });
             setSelectedExercises(prev => prev.filter(e => e.id !== exercise.id));
+            setExerciseTemplates(prev => prev.filter(e => e.id !== exercise.id));
         } else {
             setSelectedIds(prev => new Set(prev).add(exercise.id));
             setSelectedExercises(prev => [...prev, exercise]);
+            setExerciseTemplates(prev => [...prev, { id: exercise.id, sets: 1 }]);
             setFilter("")
         }
     };
@@ -98,15 +101,10 @@ const TemplateManager = () => {
             return;
         }
 
-        const exerciseTemplates: ExerciseTemplate[] = selectedExercises.map(exercise => ({
-            id: exercise.id,
-            sets: 1 // can be modified later
-        }));
-
         const workoutTemplate: WorkoutTemplate = {
             name: title,
             description: '', // can be modified later
-            exercises: exerciseTemplates,
+            exercises: ExerciseTemplates,
             createdAt: new Date(),
             updatedAt: new Date()
         };
@@ -121,6 +119,12 @@ const TemplateManager = () => {
         } catch (error) {
             console.error("Error saving workout template:", error);
         }
+    };
+
+    const updateSets = (exerciseId: string, sets: number) => {
+        setExerciseTemplates(prev => prev.map(template =>
+            template.id === exerciseId ? { ...template, sets } : template
+        ));
     };
 
     useEffect(() => {
@@ -142,10 +146,13 @@ const TemplateManager = () => {
             <View className='flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2'>
                 <TextInput
                     placeholder="Workout Title"
-                    className="font-bold text-xl text-white h-8 pt-0 pb-0"
+                    className="font-bold text-xl text-white h-8 pt-0 pb-0 w-full"
                     value={title}
                     onChangeText={setTitle}/>
-                <Button title="Save" onPress={saveWorkoutTemplate} />
+                {/*<Button title="Save" onPress={saveWorkoutTemplate} />*/}
+                <Pressable className="absolute right-2 top-2">
+                    <AntDesign name="save" size={24} color="#4096ff" onPress={saveWorkoutTemplate}/>
+                </Pressable>
             </View>
             {/*<View className='flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2'>*/}
             {/*    <TextInput*/}
@@ -163,11 +170,17 @@ const TemplateManager = () => {
                     <View>
                         <View
                             className='flex-col items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2 h-fit max-h-96'>
-                            <TextInput
-                                placeholder="Search Exercises"
-                                className="font-bold text-xl text-white h-8 pt-0 pb-0 m-2 w-full bg-gray-700 rounded-lg"
-                                value={filter}
-                                onChangeText={setFilter}/>
+                            <View className="flex-row items-center justify-between w-full mb-2">
+                                <TextInput
+                                    placeholder="Search Exercises"
+                                    className="font-bold text-xl text-white h-8 pt-0 pb-0 m-2 w-11/12 bg-gray-700 rounded-lg"
+                                    value={filter}
+                                    onChangeText={setFilter}/>
+                            <Pressable onPress={() => setFilter('')}>
+                                <AntDesign name="closecircle" className='right-1 -top-1.5 absolute'/>
+                            </Pressable>
+                            </View>
+
                             <FlatList
                                 data={filteredExercises}
                                 keyExtractor={(item, index) => item.id || index.toString()}
@@ -211,6 +224,10 @@ const TemplateManager = () => {
                                             <TextInput
                                                 placeholder="Sets"
                                                 className="text-white text-sm w-16 bg-gray-700 rounded-lg "
+                                                onChangeText={(text) => {
+                                                    const sets = parseInt(text) || 1;
+                                                    updateSets(item.id, sets);
+                                                }}
                                             />
                                         </View>
 
