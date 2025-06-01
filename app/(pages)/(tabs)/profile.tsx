@@ -37,20 +37,20 @@ const Profile = () => {
                 <View className="items-center">
                     <Image source={images.avatar} className="w-20 h-20 rounded-full mt-20 mb-2.5"/>
                     <Text className="font-bold text-white text-3xl">{userData.firstName} {userData.lastName}</Text>
-                    <Text className="text-xl text-accent-orange">@username</Text>
+                    <Text className="text-xl text-accent-orange">@{userData.username}</Text>
 
                     <View className="flex-row justify-center items-center w-3/4 mt-4">
                         <View className="items-center mx-4">
                             <Text className="font-bold text-lg text-white">Height</Text>
-                            <Text className="text-white">180 cm</Text>
+                            <Text className="text-white">{userData.height}</Text>
                         </View>
                         <View className="items-center mx-4">
                             <Text className="font-bold text-lg text-white">Weight</Text>
-                            <Text className="text-white">75 kg</Text>
+                            <Text className="text-white">{userData.weight} kg</Text>
                         </View>
                         <View className="items-center mx-4">
                             <Text className="font-bold text-lg text-white">BMI</Text>
-                            <Text className="text-white">23.1</Text>
+                            <Text className="text-white">{userData.bmi}</Text>
                         </View>
                     </View>
 
@@ -69,6 +69,7 @@ const Profile = () => {
                     </View>
 
                     <Link href="/(pages)/settings" className="font-lato-bold text-white mb-2">Settings</Link>
+                    <Link href="/(pages)/onboarding" className="font-lato-bold text-white mb-2">Onboarding</Link>
 
                     <TouchableOpacity onPress={signOut} className="bg-accent-orange py-3 px-6 rounded-lg items-center">
                         <Text className="text-white font-lato-bold">Logout</Text>
