@@ -22,3 +22,16 @@ export interface WorkoutExercise {
     name: string;
     sets: Set[];
 }
+
+export interface WorkoutTemplate {
+    name: string;
+    description: string;
+    exercises: ExerciseTemplate[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface ExerciseTemplate {
+    id: string;
+    sets: number;
+}

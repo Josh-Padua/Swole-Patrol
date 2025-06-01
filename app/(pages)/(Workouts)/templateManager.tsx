@@ -1,12 +1,25 @@
-import {View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Pressable, ScrollView} from 'react-native'
+import {
+    View,
+    Text,
+    TextInput,
+    FlatList,
+    TouchableOpacity,
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    Button
+} from 'react-native'
 import React, {useEffect} from 'react'
 import {SafeAreaView} from "react-native-safe-area-context";
 import {Exercise} from "@/types/workout";
-import {collection, getDocs} from 'firebase/firestore';
+import {addDoc, collection, getDocs} from 'firebase/firestore';
 import {db} from '@/config/firebase';
 import {AntDesign} from "@expo/vector-icons";
+import {ExerciseTemplate, WorkoutTemplate} from "@/types/workout";
+import {useAuth} from "@/context/AuthProvider"
 
 const TemplateManager = () => {
+    const {userData} = useAuth();
     const [title, setTitle] = React.useState<string>('')
     const [exercises, setExercises] = React.useState<Exercise[]>([])
     const [loading, setLoading] = React.useState<boolean>(true);
@@ -75,6 +88,41 @@ const TemplateManager = () => {
         return expandedIds.has(exerciseId);
     };
 
+    const saveWorkoutTemplate = async () => {
+        if (title.trim() === '') {
+            alert('Please enter a title for the workout template.');
+            return;
+        }
+        if (selectedExercises.length === 0) {
+            alert('Please select at least one exercise for the workout template.');
+            return;
+        }
+
+        const exerciseTemplates: ExerciseTemplate[] = selectedExercises.map(exercise => ({
+            id: exercise.id,
+            sets: 1 // can be modified later
+        }));
+
+        const workoutTemplate: WorkoutTemplate = {
+            name: title,
+            description: '', // can be modified later
+            exercises: exerciseTemplates,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        try {
+            const templatesCollection = collection(db, `users/${userData?.userId}/workoutTemplates`);
+            await addDoc(templatesCollection, workoutTemplate);
+            console.log("Workout template saved successfully:", workoutTemplate);
+            setTitle('');
+            setSelectedExercises([]);
+            setSelectedIds(new Set());
+        } catch (error) {
+            console.error("Error saving workout template:", error);
+        }
+    };
+
     useEffect(() => {
         var workoutExercises = [];
         for (const exercise of selectedExercises) {
@@ -97,6 +145,7 @@ const TemplateManager = () => {
                     className="font-bold text-xl text-white h-8 pt-0 pb-0"
                     value={title}
                     onChangeText={setTitle}/>
+                <Button title="Save" onPress={saveWorkoutTemplate} />
             </View>
             {/*<View className='flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2'>*/}
             {/*    <TextInput*/}
@@ -157,6 +206,14 @@ const TemplateManager = () => {
                                                 <AntDesign name="delete" size={24} color="red" className=""/>
                                             </Pressable>
                                         </View>
+                                        <View className="flex-row items-center justify-between mt-2">
+                                            <Text className="text-white text-lg font-bold">Number of sets</Text>
+                                            <TextInput
+                                                placeholder="Sets"
+                                                className="text-white text-sm w-16 bg-gray-700 rounded-lg "
+                                            />
+                                        </View>
+
                                         {isExerciseExpanded(item.id) ? (
                                             <View>
                                                 <View className="border-t border-gray-600 pt-4 mt-3">
