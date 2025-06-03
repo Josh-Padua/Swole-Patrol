@@ -57,12 +57,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!loading) {
             if (user) {
-                router.replace('/');
+                if (userData) {
+                    if (userData?.isOnboarded) {
+                        router.replace('/');
+                    } else {
+                        router.replace('/(pages)/onboarding');
+                    }
+                }
             } else {
                 router.replace('/(auth)/login');
             }
         }
-    }, [user, loading]);
+    }, [user, loading, userData]);
 
     const signIn = async (email: string, password: string) => {
         try {
@@ -83,7 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 lastName,
                 email,
                 createdAt: new Date().toISOString(),
-                userId: response.user.uid
+                userId: response.user.uid,
+                isOnboarded: false,
             });
 
             console.log(response);

@@ -29,14 +29,14 @@ const Onboarding = () => {
             }
 
             const bmi = calculateBMI(height, weight)
-            const userRef = doc(db, 'users', userId)
+            const userDocRef = doc(db, 'users', userId)
 
-            await updateDoc(userRef, {
+            await updateDoc(userDocRef, {
                 username: username.trim(),
                 height: parseFloat(height),
                 weight: parseFloat(weight),
                 bmi: parseFloat(bmi),
-                onboardingFinished: true,
+                isOnboarded: true,
                 updatedAt: new Date().toISOString()
             })
             router.replace('/(tabs)')

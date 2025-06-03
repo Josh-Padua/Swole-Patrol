@@ -41,7 +41,6 @@ const CreateAccount = () => {
         }
 
         await signUp(email, password, firstName, lastName);
-        router.replace('/(pages)/onboarding');
 
         setLoading(false);
     };
