@@ -124,7 +124,7 @@ const Workouts = () => {
 
         setLoading(true);
         try {
-            const templatesRef = collection(db, `workoutTemplates/`);
+            const templatesRef = collection(db, `users/${userData.userId}/workoutTemplates/`);
             const snapshot = await getDocs(templatesRef);
             const templateData = snapshot.docs.map((doc) => ({
                 id: doc.id,
@@ -141,13 +141,13 @@ const Workouts = () => {
     };
 
     const loadWorkoutTemplate = (template: any) => {
-        setCurrentWorkout(template.workoutName);
+        setCurrentWorkout(template.name);
 
         const initializedExercises = template.exercises.map((ex: any, index: number) => {
-            const sets = Array(ex.defaultSets || 0).fill({weight: 0, reps: 0});
+            const sets = Array(ex.sets || 0).fill({weight: 0, reps: 0});
             return {
                 id: ex.id || index + 1,
-                name: ex.name || `Exercise ${index + 1}`,
+                name: ex.id || `Exercise ${index + 1}`,
                 sets: sets
             };
         });
@@ -284,7 +284,7 @@ const Workouts = () => {
                                             className="bg-gray-800 p-4 rounded-lg mb-3 border border-gray-700"
                                             onPress={() => loadWorkoutTemplate(item)}
                                         >
-                                            <Text className="text-white text-lg font-bold">{item.workoutName}</Text>
+                                            <Text className="text-white text-lg font-bold">{item.name}</Text>
                                             <Text className="text-gray-400 mt-1">
                                                 {item.exercises ? `${item.exercises.length} exercises` : 'No exercises'}
                                             </Text>
