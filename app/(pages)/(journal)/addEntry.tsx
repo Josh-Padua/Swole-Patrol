@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Alert, TouchableOpacity, SafeAreaView, StyleSheet } from 'react-native'; // Import StyleSheet for potential custom styles
+import { View, Text, TextInput, Alert, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
 import { collection, addDoc } from 'firebase/firestore';
@@ -9,15 +9,14 @@ import { Picker } from '@react-native-picker/picker';
 export default function AddEntry() {
     const [workoutTitle, setWorkoutTitle] = useState('');
     const [workoutDetails, setWorkoutDetails] = useState('');
-    const [workoutRating, setWorkoutRating] = useState('5'); // Default rating to 5
-    const [sleepHours, setSleepHours] = useState('7'); // Default sleep to 7 hours
-    const [waterIntake, setWaterIntake] = useState('2'); // Default water to 2 liters
+    const [workoutRating, setWorkoutRating] = useState('5');
+    const [sleepHours, setSleepHours] = useState('7');
+    const [waterIntake, setWaterIntake] = useState('2');
     const router = useRouter();
 
-    // Define options for pickers
-    const workoutRatingOptions = Array.from({ length: 10 }, (_, i) => String(i + 1)); // 1 to 10
-    const sleepHoursOptions = Array.from({ length: 12 }, (_, i) => String(i + 1)); // 1 to 15 hours
-    const waterIntakeOptions = Array.from({ length: 10 }, (_, i) => String(i + 1)); // 1 to 10 liters
+    const workoutRatingOptions = Array.from({ length: 10 }, (_, i) => String(i + 1));
+    const sleepHoursOptions = Array.from({ length: 15 }, (_, i) => String(i + 1));
+    const waterIntakeOptions = Array.from({ length: 10 }, (_, i) => String(i + 1));
 
     const handleSave = async () => {
         if (!workoutTitle || !workoutDetails) {
@@ -34,17 +33,12 @@ export default function AddEntry() {
                 return;
             }
 
-            // Convert picker values to numbers for Firebase
-            const ratingNum = parseInt(workoutRating);
-            const sleepNum = parseFloat(sleepHours);
-            const waterNum = parseFloat(waterIntake);
-
             await addDoc(collection(db, 'workoutLogs'), {
                 workoutTitle,
                 workoutDetails,
-                workoutRating: ratingNum,
-                sleepHours: sleepNum,
-                waterIntake: waterNum,
+                workoutRating: parseInt(workoutRating),
+                sleepHours: parseFloat(sleepHours),
+                waterIntake: parseFloat(waterIntake),
                 date: new Date(),
                 uid: user.uid,
             });
@@ -52,9 +46,9 @@ export default function AddEntry() {
             Alert.alert('Success', 'Workout Log saved!');
             setWorkoutTitle('');
             setWorkoutDetails('');
-            setWorkoutRating('5'); // Reset to default after saving
-            setSleepHours('7'); // Reset to default after saving
-            setWaterIntake('2'); // Reset to default after saving
+            setWorkoutRating('5');
+            setSleepHours('7');
+            setWaterIntake('2');
             router.back();
         } catch (error) {
             console.error(error);
@@ -62,9 +56,10 @@ export default function AddEntry() {
         }
     };
 
+    const pickerContainerStyle = "border border-gray-300 rounded-lg mb-4 bg-neutral-800 px-3 h-24 justify-center";
+
     return (
         <SafeAreaView className="bg-primary-background h-full p-4">
-
             <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-5">Log Your Workout</Text>
 
             <TextInput
@@ -82,17 +77,28 @@ export default function AddEntry() {
                 numberOfLines={6}
                 className="border border-gray-300 rounded-lg mb-4 p-3 text-base text-gray-300 h-32"
                 placeholderTextColor="#A0A0A0"
-                textAlignVertical="top" // Align text to the top for multiline
+                textAlignVertical="top"
             />
 
-            {/* Workout Rating Picker */}
+            {/* Workout Rating */}
             <Text className="font-lato text-gray-300 text-base mb-2">Rate your workout (1-10):</Text>
-            <View className="border border-gray-300 rounded-lg mb-4 overflow-hidden">
+            <View className={pickerContainerStyle}>
                 <Picker
                     selectedValue={workoutRating}
-                    onValueChange={(itemValue) => setWorkoutRating(itemValue)}
-                    style={styles.picker}
-                    itemStyle={styles.pickerItem}
+                    onValueChange={setWorkoutRating}
+                    style={{
+                        color: 'white',
+                        fontSize: 18,
+                        height: 60,
+                        marginTop: Platform.OS === 'ios' ? 0 : 0,
+                    }}
+                    itemStyle={{
+                        color: 'white',
+                        fontSize: 18,
+                        height: 60,
+                    }}
+                    mode="dropdown"
+                    dropdownIconColor="white"
                 >
                     {workoutRatingOptions.map((value) => (
                         <Picker.Item key={value} label={value} value={value} />
@@ -100,14 +106,25 @@ export default function AddEntry() {
                 </Picker>
             </View>
 
-            {/* Sleep Hours Picker */}
+            {/* Sleep Hours */}
             <Text className="font-lato text-gray-300 text-base mb-2">Hours of sleep last night:</Text>
-            <View className="border border-gray-300 rounded-lg mb-4 overflow-hidden">
+            <View className={pickerContainerStyle}>
                 <Picker
                     selectedValue={sleepHours}
-                    onValueChange={(itemValue) => setSleepHours(itemValue)}
-                    style={styles.picker}
-                    itemStyle={styles.pickerItem}
+                    onValueChange={setSleepHours}
+                    style={{
+                        color: 'white',
+                        fontSize: 18,
+                        height: 60,
+                        marginTop: Platform.OS === 'ios' ? 0 : 0,
+                    }}
+                    itemStyle={{
+                        color: 'white',
+                        fontSize: 18,
+                        height: 60,
+                    }}
+                    mode="dropdown"
+                    dropdownIconColor="white"
                 >
                     {sleepHoursOptions.map((value) => (
                         <Picker.Item key={value} label={`${value} hours`} value={value} />
@@ -115,14 +132,25 @@ export default function AddEntry() {
                 </Picker>
             </View>
 
-            {/* Water Intake Picker */}
+            {/* Water Intake */}
             <Text className="font-lato text-gray-300 text-base mb-2">Water consumed today (Liters):</Text>
-            <View className="border border-gray-300 rounded-lg mb-4 overflow-hidden">
+            <View className={pickerContainerStyle}>
                 <Picker
                     selectedValue={waterIntake}
-                    onValueChange={(itemValue) => setWaterIntake(itemValue)}
-                    style={styles.picker}
-                    itemStyle={styles.pickerItem}
+                    onValueChange={setWaterIntake}
+                    style={{
+                        color: 'white',
+                        fontSize: 18,
+                        height: 60,
+                        marginTop: Platform.OS === 'ios' ? 0 : 0,
+                    }}
+                    itemStyle={{
+                        color: 'white',
+                        fontSize: 18,
+                        height: 60,
+                    }}
+                    mode="dropdown"
+                    dropdownIconColor="white"
                 >
                     {waterIntakeOptions.map((value) => (
                         <Picker.Item key={value} label={`${value} Liters`} value={value} />
@@ -130,29 +158,13 @@ export default function AddEntry() {
                 </Picker>
             </View>
 
-
-            <TouchableOpacity onPress={handleSave}
-                              className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-4">
+            <TouchableOpacity onPress={handleSave} className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-4">
                 <Text className="font-lato text-white text-base">Save Workout Log</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.back()}
-                              className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-5">
+            <TouchableOpacity onPress={() => router.back()} className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-5">
                 <Text className="font-lato text-white text-base">Return</Text>
             </TouchableOpacity>
         </SafeAreaView>
     );
 }
-
-// Basic StyleSheet for Picker to ensure visible text and background
-const styles = StyleSheet.create({
-    picker: {
-        width: '100%',
-        color: '#A0A0A0', // Text color for the selected item
-        backgroundColor: 'transparent', // Make sure background is transparent to see parent view's border
-        height: 50, // Standard height for picker on iOS/Android
-    },
-    pickerItem: {
-        color: '#A0A0A0', // Text color for picker options (iOS specific)
-    }
-});
