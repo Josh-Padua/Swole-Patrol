@@ -4,6 +4,8 @@ import { router } from 'expo-router'
 import { auth, db } from '@/config/firebase'
 import { doc, updateDoc } from 'firebase/firestore'
 
+// jest
+
 const Onboarding = () => {
     const [height, setHeight] = useState('')
     const [weight, setWeight] = useState('')
@@ -23,8 +25,15 @@ const Onboarding = () => {
                 return
             }
 
-            if(!username.trim()) {
-                alert('Please enter a username')
+            if(!username.trim() || !height.trim() || !weight.trim()) {
+                alert('Please fill in all fields.')
+                return
+            }
+
+            const heightNumber = parseFloat(height)
+            const weightNumber = parseFloat(weight)
+            if (isNaN(heightNumber) || isNaN(weightNumber)) {
+                alert('Height and weight must be valid numbers.')
                 return
             }
 
