@@ -9,18 +9,17 @@ export async function POST(request: Request) {
 
         if (!payment_method_id || !payment_intent_id || !customer_id) {
             return new Response(
-                JSON.stringify({
-                    error: 'Missing required payment information',
-                    status: 400
-                }),
+                JSON.stringify({ error: 'Missing required payment information' }),
+                { status: 400 }
             );
         }
 
-        const paymentMethod = await stripe.paymentMethods.attach(payment_method_id, {
+        const paymentMethod = await stripe.paymentMethods.attach(
+            payment_method_id, {
             customer: customer_id,
         });
 
-        const result = await stripe.paymentIntents.confirm(payment_intent_id, {
+        const result = await stripe.paymentIntents.confirm( payment_intent_id, {
             payment_method: paymentMethod.id,
         });
 
@@ -32,12 +31,9 @@ export async function POST(request: Request) {
             })
         )
     } catch (error) {
-        console.log(error);
-        return new Response(
-            JSON.stringify({
-                error: error,
+        console.log("Error paying:", error);
+        return new Response(JSON.stringify({ error: "Internal Server Error" }), {
                 status: 500,
             })
-        )
     }
 }

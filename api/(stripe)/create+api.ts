@@ -4,20 +4,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: Request) {
     const body = await request.json();
-    const { name, email, amount } = body;
+    const { name, email } = body;
 
     if (!name || !email) {
         return new Response(
-            JSON.stringify({
-                error: 'Please enter a valid email address',
-                status: 400
-            }),
-        );
+            JSON.stringify({ error: "Missing required fields",}), {
+                status: 400,
+            });
     }
 
     let customer;
+    const existingCustomer = await stripe.customers.list({ email });
 
-    const existingCustomer = await stripe.customers.list({email});
     if (existingCustomer.data.length > 0) {
         customer = existingCustomer.data[0];
     } else {
@@ -32,7 +30,7 @@ export async function POST(request: Request) {
         {customer: customer.id},
         {apiVersion: '2020-08-27'},
     );
-    const paymentIntent = await stripe.paymentIntents.create( {
+    const paymentIntent = await stripe.paymentIntents.create({
         amount: 599,
         currency: 'nzd',
         customer: customer.id,
