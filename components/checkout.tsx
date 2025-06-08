@@ -8,15 +8,37 @@ const Checkout = () => {
 
     const confirmHandler = async (paymentMethod, intentCreationCallback) => {
         // Make a request to server
-        const { paymentIntent, customer} = await fetchAPI('/(api)/(stripe)/create', {
+        const { paymentIntent, customer } = await fetchAPI('/(api)/(stripe)/create', {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                // name: firstName
+                paymentMethodId: paymentMethod.id,
+                amount: 599,
+                currency: 'nzd',
+                customer_name: paymentMethod.billing_details?.name || '',
+                customer_email: paymentMethod.billing_details?.email || '',
+            }),
+            },
+        )
+
+        if (paymentIntent.client_secret) {
+            const { result } = await fetchAPI('/(api)/(stripe)/pay', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    payment_method_id: paymentMethod.id,
+                    payment_intent_id: paymentIntent.id,
+                    customer_id: customer,
+                }),
             })
-        })
+            if(result.client_secret) {
+
+            }
+        }
 
         const { clientSecret, error } = await response.json();
         if (clientSecret) {
