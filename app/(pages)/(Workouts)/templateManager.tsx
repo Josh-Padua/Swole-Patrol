@@ -6,8 +6,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Pressable,
-    ScrollView,
-    Button
+    KeyboardAvoidingView
 } from 'react-native'
 import React, {useEffect} from 'react'
 import {SafeAreaView} from "react-native-safe-area-context";
@@ -21,6 +20,7 @@ import {useAuth} from "@/context/AuthProvider"
 const TemplateManager = () => {
     const {userData} = useAuth();
     const [title, setTitle] = React.useState<string>('')
+    const [description, setDescription] = React.useState<string>('')
     const [exercises, setExercises] = React.useState<Exercise[]>([])
     const [loading, setLoading] = React.useState<boolean>(true);
     const [filter, setFilter] = React.useState<string>('');
@@ -39,10 +39,15 @@ const TemplateManager = () => {
         try {
             const exercisesCollection = collection(db, 'exercises');
             const exerciseDocs = await getDocs(exercisesCollection);
-            const fetchedExercises: Exercise[] = exerciseDocs.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data() as Omit<Exercise, 'id'>
-            }));
+            // @ts-ignore
+            const fetchedExercises: Exercise[] = exerciseDocs.docs.map(doc => {
+                const { id: fieldId, ...exerciseData } = doc.data();
+                return {
+                    id: doc.id,
+                    fieldId,
+                    ...exerciseData
+                };
+            });
             fetchedExercises.sort((a, b) => a.name.localeCompare(b.name));
             setExercises(fetchedExercises);
             setLoading(false);
@@ -103,7 +108,7 @@ const TemplateManager = () => {
 
         const workoutTemplate: WorkoutTemplate = {
             name: title,
-            description: '', // can be modified later
+            description: description,
             exercises: ExerciseTemplates,
             createdAt: new Date(),
             updatedAt: new Date()
@@ -116,6 +121,7 @@ const TemplateManager = () => {
             setTitle('');
             setSelectedExercises([]);
             setSelectedIds(new Set());
+            setDescription('');
         } catch (error) {
             console.error("Error saving workout template:", error);
         }
@@ -128,7 +134,7 @@ const TemplateManager = () => {
     };
 
     useEffect(() => {
-        var workoutExercises = [];
+        let workoutExercises = [];
         for (const exercise of selectedExercises) {
             workoutExercises.push(exercise.name);
         }
@@ -142,32 +148,34 @@ const TemplateManager = () => {
     }, []);
 
     return (
-        <SafeAreaView className="bg-primary-background h-full">
-            <View className='flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2'>
-                <TextInput
-                    placeholder="Workout Title"
-                    className="font-bold text-xl text-white h-8 pt-0 pb-0 w-full"
-                    value={title}
-                    onChangeText={setTitle}/>
-                {/*<Button title="Save" onPress={saveWorkoutTemplate} />*/}
-                <Pressable className="absolute right-2 top-2">
-                    <AntDesign name="save" size={24} color="#4096ff" onPress={saveWorkoutTemplate}/>
-                </Pressable>
-            </View>
-            {/*<View className='flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2'>*/}
-            {/*    <TextInput*/}
-            {/*        placeholder="Search Exercises"*/}
-            {/*        className="font-bold text-xl text-white h-8 pt-0 pb-0"*/}
-            {/*        value={filter}*/}
-            {/*        onChangeText={setFilter}/>*/}
-            {/*</View>*/}
-            {loading ? (
-                <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="white"/>
+        <SafeAreaView className="bg-primary-background h-full flex-1">
+            <KeyboardAvoidingView style={{ flex: 1 }}>
+                <View className='flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2'>
+                    <TextInput
+                        placeholder="Workout Title"
+                        className="font-bold text-xl text-white h-8 pt-0 pb-0 w-full"
+                        value={title}
+                        onChangeText={setTitle}/>
+                    <Pressable className="absolute right-2 top-2">
+                        <AntDesign name="save" size={24} color="#4096ff" onPress={saveWorkoutTemplate}/>
+                    </Pressable>
                 </View>
-            ) : (
-                <ScrollView>
-                    <View>
+                <View className="flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2">
+                    <TextInput
+                        className='font-bold text-xl text-white h-fit pt-0 pb-0 w-full'
+                        placeholder="Description"
+                        value={description}
+                        multiline={true}
+                        numberOfLines={2}
+                        onChangeText={setDescription}
+                    />
+                </View>
+                {loading ? (
+                    <View className="flex-1 justify-center items-center">
+                        <ActivityIndicator size="large" color="white"/>
+                    </View>
+                ) : (
+                    <View style={{ flex: 1 }}>
                         <View
                             className='flex-col items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2 h-fit max-h-96'>
                             <View className="flex-row items-center justify-between w-full mb-2">
@@ -176,11 +184,10 @@ const TemplateManager = () => {
                                     className="font-bold text-xl text-white h-8 pt-0 pb-0 m-2 w-11/12 bg-gray-700 rounded-lg"
                                     value={filter}
                                     onChangeText={setFilter}/>
-                            <Pressable onPress={() => setFilter('')}>
-                                <AntDesign name="closecircle" className='right-1 -top-1.5 absolute'/>
-                            </Pressable>
+                                <Pressable onPress={() => setFilter('')}>
+                                    <AntDesign name="closecircle" className='right-1 -top-1.5 absolute'/>
+                                </Pressable>
                             </View>
-
                             <FlatList
                                 data={filteredExercises}
                                 keyExtractor={(item, index) => item.id || index.toString()}
@@ -205,12 +212,13 @@ const TemplateManager = () => {
                                 }}
                             />
                         </View>
-                        <View className='flex-col items-start justify-center mt-4 bg-primary m-2 rounded-lg p-2'>
+                        <View className='flex-1 flex-col items-start justify-center mt-4 bg-primary m-2 rounded-lg p-2'>
                             <Text className="text-white text-xl font-bold ml-2 pb-3">Selected exercises</Text>
                             <FlatList
                                 data={selectedExercises}
                                 keyExtractor={(item, index) => item.id || index.toString()}
-                                className="w-full"
+                                className="w-full flex-1"
+                                contentContainerStyle={{ flexGrow: 1 }}
                                 renderItem={({item}) => (
                                     <View className="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700">
                                         <View className="flex-row items-center justify-between">
@@ -230,7 +238,6 @@ const TemplateManager = () => {
                                                 }}
                                             />
                                         </View>
-
                                         {isExerciseExpanded(item.id) ? (
                                             <View>
                                                 <View className="border-t border-gray-600 pt-4 mt-3">
@@ -241,7 +248,6 @@ const TemplateManager = () => {
                                                             <Text
                                                                 className="text-gray-200 flex-1 font-medium capitalize">{item.level}</Text>
                                                         </View>
-
                                                         <View className="flex-row items-start">
                                                             <Text
                                                                 className="text-orange-500 font-bold w-24 text-sm">FORCE:</Text>
@@ -276,21 +282,6 @@ const TemplateManager = () => {
                                                                     className="text-gray-100 flex-1">{item.secondaryMuscles.join(', ')}</Text>
                                                             </View>
                                                         </View>
-                                                        <View className="bg-blue-900/30 p-3 rounded-lg mt-3">
-                                                            <Text className="text-blue-400 font-bold text-sm mb-3">HOW
-                                                                TO
-                                                                PERFORM</Text>
-                                                            <View className="space-y-2">
-                                                                {item.instructions.map((instruction, index) => (
-                                                                    <View key={index} className="flex-row items-start">
-                                                                        <Text
-                                                                            className="text-blue-300 font-bold text-xs w-6 mt-0.5">{index + 1}.</Text>
-                                                                        <Text
-                                                                            className="text-gray-200 flex-1 leading-5">{instruction}</Text>
-                                                                    </View>
-                                                                ))}
-                                                            </View>
-                                                        </View>
                                                     </View>
                                                 </View>
                                                 <Pressable className="items-center"
@@ -303,13 +294,13 @@ const TemplateManager = () => {
                                                 <AntDesign name="down" color="#ea580c" size={24}/>
                                             </Pressable>
                                         )}
-
                                     </View>
                                 )}
                             />
                         </View>
                     </View>
-                </ScrollView>)}
+                )}
+            </KeyboardAvoidingView>
         </SafeAreaView>
     )
 }

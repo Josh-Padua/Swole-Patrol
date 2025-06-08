@@ -20,6 +20,8 @@ export interface Set {
 export interface WorkoutExercise {
     id: number;
     name: string;
+    exercise: Exercise;
+    helpShown: boolean;
     sets: Set[];
 }
 

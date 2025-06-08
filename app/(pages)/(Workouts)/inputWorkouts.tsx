@@ -1,20 +1,21 @@
 import {
-    View,
-    Text,
-    SafeAreaView,
-    Pressable,
+    ActivityIndicator,
     FlatList,
     Modal,
-    TouchableOpacity,
+    Pressable,
+    SafeAreaView,
+    ScrollView,
+    Text,
     TextInput,
-    ActivityIndicator
+    TouchableOpacity,
+    View
 } from 'react-native'
 import React, {useEffect, useState} from 'react'
 import {useAuth} from "@/context/AuthProvider";
 import {AntDesign} from "@expo/vector-icons";
 import {collection, doc, getDoc, getDocs, setDoc} from 'firebase/firestore';
 import {db} from '@/config/firebase';
-import {WorkoutExercise} from "@/types/workout";
+import {Exercise, WorkoutExercise} from "@/types/workout";
 import {router} from "expo-router";
 
 const Workouts = () => {
@@ -140,17 +141,39 @@ const Workouts = () => {
         setLoading(false);
     };
 
-    const loadWorkoutTemplate = (template: any) => {
+    const getExerciseById = async (id: string) => {
+        try {
+            const exerciseRef = doc(db, 'exercises', id);
+            const exerciseDoc = await getDoc(exerciseRef);
+
+            if (exerciseDoc.exists()) {
+                console.log("Fetched exercise by ID:", id, exerciseDoc.data());
+                return exerciseDoc.data() as Exercise;
+            } else {
+                console.error("No exercise found with ID:", id);
+                return null;
+            }
+        } catch (error) {
+            console.error("Error fetching exercise by ID:", error);
+            return null;
+        }
+    };
+
+    const loadWorkoutTemplate = async (template: any) => {
         setCurrentWorkout(template.name);
 
-        const initializedExercises = template.exercises.map((ex: any, index: number) => {
+        const initializedExercises = await Promise.all(template.exercises.map(async (ex: any, index: number) => {
             const sets = Array(ex.sets || 0).fill({weight: 0, reps: 0});
+            const exercise = await getExerciseById(ex.id);
+
             return {
                 id: ex.id || index + 1,
-                name: ex.id || `Exercise ${index + 1}`,
+                name: exercise?.name || `Exercise ${index + 1}`,
+                exercise: exercise || null,
+                helpShown: false,
                 sets: sets
             };
-        });
+        }));
 
         setExercises(initializedExercises);
         setShowTemplates(false);
@@ -187,7 +210,7 @@ const Workouts = () => {
         setLoading(false);
     };
 
-    const loadWorkout = (workout: any) => {
+    const loadWorkout = async (workout: any) => {
         if (!workout || !workout.workoutName || !workout.exercises) {
             console.log("Invalid workout data:", workout);
             setCurrentWorkout('');
@@ -197,16 +220,33 @@ const Workouts = () => {
 
         setCurrentWorkout(workout.workoutName);
 
-        const initializedExercises = workout.exercises.map((ex: any, index: number) => {
+        const initializedExercises = await Promise.all(workout.exercises.map(async (ex: any, index: number) => {
+            const exercise = await getExerciseById(ex.id);
             return {
                 id: ex.id || index + 1,
                 name: ex.name || `Exercise ${index + 1}`,
+                exercise: exercise || null,
+                helpShown: false,
                 sets: Array.isArray(ex.sets) ? ex.sets : [],
             };
-        });
+        }));
         setExercises(initializedExercises);
         setShowTemplates(false);
     };
+
+    const toggleHelpShown = (exerciseId: number) => {
+        setExercises((prev) => {
+            return prev.map((exercise) => {
+                if (exercise.id === exerciseId) {
+                    return {
+                        ...exercise,
+                        helpShown: !exercise.helpShown
+                    };
+                }
+                return exercise;
+            });
+        });
+    }
 
     useEffect(() => {
         if (dateString) {
@@ -288,6 +328,9 @@ const Workouts = () => {
                                             <Text className="text-gray-400 mt-1">
                                                 {item.exercises ? `${item.exercises.length} exercises` : 'No exercises'}
                                             </Text>
+                                            <Text className="text-gray-400 mt-1">
+                                                {item.description || 'No description available'}
+                                            </Text>
                                         </TouchableOpacity>
                                     )}
                                 />
@@ -316,7 +359,61 @@ const Workouts = () => {
                             keyExtractor={(item) => item.id.toString()}
                             renderItem={({item}) => (
                                 <View className="bg-primary m-2 rounded-lg p-2">
-                                    <Text className="text-white text-xl font-bold ml-2">{item.name}</Text>
+                                    <Modal visible={item.helpShown} transparent animationType="fade">
+                                        <View className="flex-1 justify-end">
+                                            <TouchableOpacity
+                                                className="absolute h-full w-full bg-black/50"
+                                                onPress={() => toggleHelpShown(item.id)}
+                                            />
+                                            <View className="bg-gray-900 rounded-t-3xl p-6 min-h-[40%] max-h-[80%]">
+                                                <View className="flex-row justify-between items-center mb-4">
+                                                    <Text className="text-white text-xl font-bold">{item.name}</Text>
+                                                    <Pressable onPress={() => toggleHelpShown(item.id)}>
+                                                        <AntDesign name="close" size={24} color="#9ca3af"/>
+                                                    </Pressable>
+                                                </View>
+
+                                                {item.exercise ? (
+                                                    <ScrollView className="space-y-4">
+                                                        <View className="bg-gray-800/50 p-4 rounded-xl">
+                                                            <Text className="text-orange-500 font-bold text-sm mb-2">EXERCISE INFO</Text>
+                                                            <View className="space-y-2">
+                                                                <View className="flex-row">
+                                                                    <Text className="text-gray-400 w-24">Level:</Text>
+                                                                    <Text className="text-white flex-1 capitalize">{item.exercise.level}</Text>
+                                                                </View>
+                                                                <View className="flex-row">
+                                                                    <Text className="text-gray-400 w-24">Equipment:</Text>
+                                                                    <Text className="text-white flex-1 capitalize">{item.exercise.equipment}</Text>
+                                                                </View>
+                                                            </View>
+                                                        </View>
+
+                                                        <View className="bg-blue-900/30 p-4 rounded-xl">
+                                                            <Text className="text-blue-400 font-bold text-sm mb-3">INSTRUCTIONS</Text>
+                                                            {item.exercise.instructions.map((instruction, index) => (
+                                                                <View key={index} className="flex-row mb-3 last:mb-0">
+                                                                    <Text className="text-blue-400 font-bold mr-2">{index + 1}.</Text>
+                                                                    <Text className="text-gray-300 flex-1 leading-5">{instruction}</Text>
+                                                                </View>
+                                                            ))}
+                                                        </View>
+                                                    </ScrollView>
+                                                ) : (
+                                                    <View className="flex-1 justify-center items-center">
+                                                        <Text className="text-gray-400">No instructions available</Text>
+                                                    </View>
+                                                )}
+                                            </View>
+                                        </View>
+                                    </Modal>
+                                    <View className="flex-row items-center justify-between mb-2">
+                                        <Text className="text-white text-xl font-bold ml-2">{item.name}</Text>
+                                        <Pressable onPress={() => toggleHelpShown(item.id)}>
+                                            <AntDesign name="questioncircle" size={24} color="#4096ff"/>
+                                        </Pressable>
+                                    </View>
+
                                     {item.sets.map((set, index) => (
                                         <View className="flex-row justify-between" key={index}>
                                             <View className="flex-1 justify-start items-start m-2 px-2 mt-12">
