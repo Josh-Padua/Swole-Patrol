@@ -8,7 +8,7 @@ import {
     Pressable,
     KeyboardAvoidingView
 } from 'react-native'
-import React, {useEffect} from 'react'
+import React, {useEffect, useState} from 'react'
 import {SafeAreaView} from "react-native-safe-area-context";
 import {Exercise} from "@/types/workout";
 import {addDoc, collection, getDocs} from 'firebase/firestore';
@@ -16,23 +16,46 @@ import {db} from '@/config/firebase';
 import {AntDesign} from "@expo/vector-icons";
 import {ExerciseTemplate, WorkoutTemplate} from "@/types/workout";
 import {useAuth} from "@/context/AuthProvider"
+import {Picker} from '@react-native-picker/picker';
 
 const TemplateManager = () => {
     const {userData} = useAuth();
-    const [title, setTitle] = React.useState<string>('')
-    const [description, setDescription] = React.useState<string>('')
-    const [exercises, setExercises] = React.useState<Exercise[]>([])
-    const [loading, setLoading] = React.useState<boolean>(true);
-    const [filter, setFilter] = React.useState<string>('');
-    const filteredExercises = filter.trim()
-        ? exercises.filter(exercise =>
-            exercise.name.toLowerCase().includes(filter.toLowerCase())
+    const [title, setTitle] = useState<string>('')
+    const [description, setDescription] = useState<string>('')
+    const [exercises, setExercises] = useState<Exercise[]>([])
+    const [loading, setLoading] = useState<boolean>(true);
+    const [filter, setFilter] = useState<string>('');
+    const [selectedMuscle, setSelectedMuscle] = useState<string>('');
+    const [selectedEquipment, setSelectedEquipment] = useState<string>('');
+    const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const [ExerciseTemplates, setExerciseTemplates] = useState<ExerciseTemplate[]>([]);
+
+    const allMuscles = Array.from(
+        new Set(
+            exercises.flatMap(e => (e.primaryMuscles || []).filter((m): m is string => !!m))
         )
-        : [];
-    const [selectedExercises, setSelectedExercises] = React.useState<Exercise[]>([]);
-    const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
-    const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
-    const [ExerciseTemplates, setExerciseTemplates] = React.useState<ExerciseTemplate[]>([]);
+    ).sort((a, b) => a.localeCompare(b));
+
+    const allEquipment = Array.from(
+        new Set(
+            exercises.map(e => e.equipment).filter((eq): eq is string => !!eq)
+        )
+    ).sort((a, b) => a.localeCompare(b));
+
+    const filteredExercises = exercises.filter(exercise => {
+        const matchesName = filter.trim()
+            ? exercise.name.toLowerCase().includes(filter.toLowerCase())
+            : true;
+        const matchesMuscle = selectedMuscle
+            ? (exercise.primaryMuscles || []).includes(selectedMuscle)
+            : true;
+        const matchesEquipment = selectedEquipment
+            ? exercise.equipment === selectedEquipment
+            : true;
+        return matchesName && matchesMuscle && matchesEquipment;
+    });
 
     const fetchExercises = async () => {
         setLoading(true);
@@ -52,7 +75,6 @@ const TemplateManager = () => {
             setExercises(fetchedExercises);
             setLoading(false);
         } catch (error) {
-            console.error("Error fetching exercises: ", error);
         } finally {
             setLoading(false);
         }
@@ -117,13 +139,11 @@ const TemplateManager = () => {
         try {
             const templatesCollection = collection(db, `users/${userData?.userId}/workoutTemplates`);
             await addDoc(templatesCollection, workoutTemplate);
-            console.log("Workout template saved successfully:", workoutTemplate);
             setTitle('');
             setSelectedExercises([]);
             setSelectedIds(new Set());
             setDescription('');
         } catch (error) {
-            console.error("Error saving workout template:", error);
         }
     };
 
@@ -138,7 +158,6 @@ const TemplateManager = () => {
         for (const exercise of selectedExercises) {
             workoutExercises.push(exercise.name);
         }
-        console.log("Selected Exercises: ", workoutExercises);
     }, [selectedExercises]);
 
     useEffect(() => {
@@ -176,8 +195,37 @@ const TemplateManager = () => {
                     </View>
                 ) : (
                     <View style={{ flex: 1 }}>
-                        <View
-                            className='flex-col items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2 h-fit max-h-96'>
+                        <View className='flex-col items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2 h-fit max-h-96'>
+                            <View className="flex-row w-full mb-2">
+                                <View className="flex-row w-full mb-2">
+                                    <View style={{ flex: 1, height: 50, backgroundColor: '#374151', borderRadius: 8, overflow: 'hidden' }}>
+                                        <Picker
+                                            selectedValue={selectedMuscle}
+                                            style={{ flex: 1, color: 'white', height: 50 }}
+                                            onValueChange={setSelectedMuscle}
+                                            itemStyle={{ height: 50, fontSize: 16 }}
+                                        >
+                                            <Picker.Item label="All Muscles" value="" />
+                                            {allMuscles.map(muscle => (
+                                                <Picker.Item key={muscle} label={muscle} value={muscle} />
+                                            ))}
+                                        </Picker>
+                                    </View>
+                                    <View style={{ flex: 1, height: 50, backgroundColor: '#374151', borderRadius: 8, marginLeft: 8, overflow: 'hidden' }}>
+                                        <Picker
+                                            selectedValue={selectedEquipment}
+                                            style={{ flex: 1, color: 'white', height: 50 }}
+                                            onValueChange={setSelectedEquipment}
+                                            itemStyle={{ height: 50, fontSize: 16 }}
+                                        >
+                                            <Picker.Item label="All Equipment" value="" />
+                                            {allEquipment.map(eq => (
+                                                <Picker.Item key={eq} label={eq} value={eq} />
+                                            ))}
+                                        </Picker>
+                                    </View>
+                                </View>
+                            </View>
                             <View className="flex-row items-center justify-between w-full mb-2">
                                 <TextInput
                                     placeholder="Search Exercises"
