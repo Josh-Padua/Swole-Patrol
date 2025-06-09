@@ -89,6 +89,9 @@ function parseMacronutrients(nutrients: nutrientData[]): MacronutrientProfile {
 }
 
 async function getFoods(query:string):Promise<detailedFoodData[]|undefined> {
+    if (query.length < 2 || query.length > 20)
+        return undefined;
+
     const apiKey = await getAPIKey();
     const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${query}&dataType=Survey%20%28FNDDS%29&pageSize=10&pageNumber=1&sortBy=dataType.keyword&sortOrder=asc&requireAllWords=true`
 
