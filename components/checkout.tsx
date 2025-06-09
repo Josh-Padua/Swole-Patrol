@@ -2,54 +2,18 @@ import {View, Text, TouchableOpacity, Alert} from 'react-native'
 import React, {useEffect, useState} from 'react'
 import {PaymentSheetError, useStripe} from '@stripe/stripe-react-native';
 import { fetchAPI } from "@/lib/fetch";
+import * as Linking from 'expo-linking';
 
 const Checkout = () => {
     const {initPaymentSheet, presentPaymentSheet } = useStripe();
+    const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
-    // const confirmHandler = async (paymentMethod, intentCreationCallback) => {
-    //     // Make a request to server
-    //     const { paymentIntent, customer } = await fetchAPI('/api/(stripe)/create', {
-    //         method: "POST",
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         },
-    //         body: JSON.stringify({
-    //             paymentMethodId: paymentMethod.id,
-    //             amount: 599,
-    //             currency: 'nzd',
-    //             name: paymentMethod.billing_details?.name || '',
-    //             email: paymentMethod.billing_details?.email || '',
-    //         }),
-    //         },
-    //     )
-    //
-    //     if (paymentIntent.client_secret) {
-    //         const { result } = await fetchAPI('/api/(stripe)/pay', {
-    //             method: "POST",
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify({
-    //                 payment_method_id: paymentMethod.id,
-    //                 payment_intent_id: paymentIntent.id,
-    //                 customer_id: customer,
-    //                 client_secret: paymentIntent.client_secret,
-    //             }),
-    //         })
-    //     }
-    //
-    //     const { clientSecret, error } = await response.json();
-    //     if (clientSecret) {
-    //         intentCreationCallback({clientSecret})
-    //     } else {
-    //         intentCreationCallback({error})
-    //     }
-    // }
-
     const initializePaymentSheet = async () => {
+
         const { error } = await initPaymentSheet({
             merchantDisplayName: "Swole Patrol",
+
             intentConfiguration: {
                 mode: {
                     amount: 599,
@@ -75,32 +39,11 @@ const Checkout = () => {
                         intentCreationCallback({ clientSecret: paymentIntent.client_secret });
                     }
 
-                    // if (paymentIntent.client_secret) {
-                    //     const { result } = await fetchAPI("/api/(stripe)/pay", {
-                    //         method: "POST",
-                    //         headers: {
-                    //             "Content-Type": "application/json",
-                    //         },
-                    //         body: JSON.stringify({
-                    //             payment_method_id: paymentMethod.id,
-                    //             payment_intent_id: paymentIntent.id,
-                    //             customer_id: customer,
-                    //             client_secret: paymentIntent.client_secret,
-                    //         })
-                    //     })
-                    //
-                    //     if (result.client_secret) {
-                    //         // logic to add verified mark to customer in firebase
-                    //
-                    //         // intentCreationCallback({ clientSecret: result.client_secret });
-                    //         setSuccess(true);
-                    //     }
-                    // }
                 },
             },
-            returnURL: "myapp://premium",
         });
         if (error) {
+            setLoading(true);
             // handle error
         }
     };
@@ -108,25 +51,6 @@ const Checkout = () => {
     useEffect(() => {
         initializePaymentSheet();
     }, [])
-
-    // const confirmHandler = async (
-    //     paymentMethod: PaymentMethod.Result,
-    //     shouldSavePaymentMethod: boolean,
-    //     intentCreationCallback: (params: IntentCreationCallbackParams) => void
-    // )=> {
-    //     const response = await fetch('/api/(stripe)/create', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         }
-    //     });
-    //     const { client_secret, error } = await response.json();
-    //     if (client_secret) {
-    //         intentCreationCallback({clientSecret: client_secret});
-    //     } else {
-    //         intentCreationCallback({error});
-    //     }
-    // }
 
     const openPaymentSheet = async () => {
 
