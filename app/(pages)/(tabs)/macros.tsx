@@ -4,6 +4,7 @@ import {queryMeals, getPossibleMatches, getMeal, addNewMeal, MealData, Macronutr
 import {getMacros, setMacros} from "@/api/user-macros";
 import StatusBar from "@/components/statusBar";
 import {setGoals} from "@/api/user-macro-goals";
+import {test} from "@/api/usda-macros";
 
 
 let mealSet:MealData[] = [];
@@ -43,6 +44,8 @@ const Macros = () => {
         };
 
         loadData();
+
+        test();
     }, []);
 
     /**
