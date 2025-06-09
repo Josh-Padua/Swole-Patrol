@@ -1,6 +1,6 @@
 import {doc, getDoc} from "firebase/firestore";
 import {db} from "../config/firebase";
-import {MacronutrientProfile, sanitiseString} from "./meal-macros-library";
+import {MacronutrientProfile, MealData, sanitiseString} from "./meal-macros-library";
 import {unflatten} from "react-native-reanimated/lib/typescript/animation/transformationMatrix/matrixUtils";
 
 
@@ -104,14 +104,26 @@ async function getFoods(query:string):Promise<detailedFoodData[]|undefined> {
     }
 }
 
+export async function getNewMeals(food:string):Promise<MealData[]> {
+    const foods = await getFoods(food);
+    if (foods == undefined || foods.length < 1)
+        return [];
+
+    var meals:MealData[] = []
+    for (const food of foods) {
+        meals.push({
+            name: food.description,
+            macros: parseMacronutrients(food.foodNutrients)
+        });
+    }
+
+    return meals;
+}
+
 export async function getNewFoodMacros(food:string):Promise<MacronutrientProfile|null> {
     const foods = await getFoods(food);
     if (foods == undefined || foods.length < 1)
         return null;
 
     return parseMacronutrients(foods[0].foodNutrients);
-}
-
-export async function test() {
-    console.log(await getNewFoodMacros("milk"));
 }

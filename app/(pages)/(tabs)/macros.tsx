@@ -4,10 +4,11 @@ import {queryMeals, getPossibleMatches, getMeal, addNewMeal, MealData, Macronutr
 import {getMacros, setMacros} from "@/api/user-macros";
 import StatusBar from "@/components/statusBar";
 import {setGoals} from "@/api/user-macro-goals";
-import {test} from "@/api/usda-macros";
+import {getNewMeals} from "../../../api/usda-macros";
 
 
 let mealSet:MealData[] = [];
+let knownMeals:boolean = true;
 
 const BUTTON_COLOR = '#ff5400'
 const STATUS_BAR_HEIGHT:number = 20;
@@ -44,8 +45,6 @@ const Macros = () => {
         };
 
         loadData();
-
-        test();
     }, []);
 
     /**
@@ -84,15 +83,25 @@ const Macros = () => {
 
         if (text.length > 0) {
             // Retrieve new meal set
-            if (mealSet.length == 0)
+            if (mealSet.length == 0) {
                 mealSet = await queryMeals(text)
+                knownMeals = true;
+            }
 
             // Filter meals, to provide suggestions
-            const filteredMeals:string[] = await getPossibleMatches(text, mealSet);
+            var filteredMeals:string[] = await getPossibleMatches(text, mealSet);
+            if (filteredMeals.length == 0) {
+                mealSet.push(...(await getNewMeals(text)));
+                knownMeals = false;
+
+                filteredMeals = await getPossibleMatches(text, mealSet);
+            } // Find new meals
+
             setFilteredSuggestions(filteredMeals);
             setShowSuggestions(true);
         } else {
             mealSet = []; // Reset meal set
+            knownMeals = true;
 
             setFilteredSuggestions([]);
             setShowSuggestions(false);
@@ -117,17 +126,22 @@ const Macros = () => {
                                 `${mealData.name}\nCalories: ${mealData.macros.calories} kcal;\nProtein: ${mealData.macros.protein}g;\nCarbs: ${mealData.macros.carbohydrates}g;\nFat: ${mealData.macros.fats}g` :
                                 `${mealText}\n(Macros not found!)`;
 
-        // Update totals
         if (mealData != null) {
+            // Update totals
             await updateMacros({
                 calories: consumedCalories + mealData.macros.calories,
                 protein: consumedProtein + mealData.macros.protein,
                 carbohydrates: consumedCarbs + mealData.macros.carbohydrates,
                 fats: consumedFat + mealData.macros.fats
             });
+
+            // Update db
+            if (!knownMeals){
+                await addNewMeal(mealData);
+            }
         }
 
-        console.log('Submitted:', data);
+        console.log(`Submitted: ${mealData?.name}${!knownMeals? " (a new meal)" : ""}`);
 
         setMealText(""); // Reset input
     };
