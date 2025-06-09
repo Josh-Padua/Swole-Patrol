@@ -91,7 +91,8 @@ const Macros = () => {
             // Filter meals, to provide suggestions
             var filteredMeals:string[] = await getPossibleMatches(text, mealSet);
             if (filteredMeals.length == 0) {
-                mealSet.push(...(await getNewMeals(text)));
+                const existingMealsKeys = new Set(mealSet.map(meal => meal.name));
+                mealSet.push(...(await getNewMeals(text)).filter(meal => !existingMealsKeys.has(meal.name)));
                 knownMeals = false;
 
                 filteredMeals = await getPossibleMatches(text, mealSet);

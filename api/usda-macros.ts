@@ -36,26 +36,36 @@ async function getAPIKey():Promise<string|undefined> {
 }
 
 function parseFoodData(usdaJsonResp:any, query:string):detailedFoodData[] {
-    const foodData:detailedFoodData[] = (usdaJsonResp.foods || []).map((food: any) => ({
-        fdcId: food.fdcId,
-        description: food.description,
-        foodNutrients: (food.foodNutrients || [])
-            .filter((nutrient: any) =>
-                NUTRIENT_ID_WHITELIST.includes(nutrient.nutrientId)
-            )
-            .map((nutrient: any) => ({
+    const foods = usdaJsonResp.foods || [];
+    const sanitisedQuery = sanitiseString(query);
+    const seenDescriptions = new Set<string>();
+    const result: detailedFoodData[] = [];
+
+    for (const food of foods) {
+        const cleanDescription = sanitiseString(food.description);
+        if (!cleanDescription.startsWith(sanitisedQuery)) continue;
+
+        const filteredNutrients = (food.foodNutrients || []).filter((nutrient: any) =>
+            NUTRIENT_ID_WHITELIST.includes(nutrient.nutrientId)
+        );
+
+        if (filteredNutrients.length === 0) continue;
+        if (seenDescriptions.has(cleanDescription)) continue;
+
+        seenDescriptions.add(cleanDescription);
+
+        result.push({
+            fdcId: food.fdcId,
+            description: cleanDescription,
+            foodNutrients: filteredNutrients.map((nutrient: any) => ({
                 nutrientId: nutrient.nutrientId,
                 nutrientName: nutrient.nutrientName,
                 value: nutrient.value,
-            })
-        ),
-    }));
+            })),
+        });
+    }
 
-    return foodData.filter(
-        food =>
-            food.foodNutrients.length > 0 &&
-            sanitiseString(food.description).startsWith(sanitiseString(query))
-    );
+    return result;
 }
 
 function parseMacronutrients(nutrients: nutrientData[]): MacronutrientProfile {
