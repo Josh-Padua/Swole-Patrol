@@ -301,10 +301,10 @@ const Workouts = () => {
                         <View className="flex-1 p-4 bg-black/85">
                             <View className="flex-row">
                                 <Text className="m-4 text-white text-xl font-bold">Workout Templates</Text>
-                                <Pressable className="flex-row m-4 absolute right-0" onPress={() =>
-                                {
+                                <Pressable className="flex-row m-4 absolute right-0" onPress={() => {
                                     setShowTemplates(false);
-                                    router.push('/(pages)/(Workouts)/templateManager')}
+                                    router.push('/(pages)/(Workouts)/templateManager')
+                                }
                                 }>
                                     <Text className="text-blue-500 text-xl font-bold mr-2">Add</Text>
                                     <AntDesign name="pluscircle" size={24} color="#3b82f6"/>
@@ -376,25 +376,32 @@ const Workouts = () => {
                                                 {item.exercise ? (
                                                     <ScrollView className="space-y-4">
                                                         <View className="bg-gray-800/50 p-4 rounded-xl">
-                                                            <Text className="text-orange-500 font-bold text-sm mb-2">EXERCISE INFO</Text>
+                                                            <Text className="text-orange-500 font-bold text-sm mb-2">EXERCISE
+                                                                INFO</Text>
                                                             <View className="space-y-2">
                                                                 <View className="flex-row">
                                                                     <Text className="text-gray-400 w-24">Level:</Text>
-                                                                    <Text className="text-white flex-1 capitalize">{item.exercise.level}</Text>
+                                                                    <Text
+                                                                        className="text-white flex-1 capitalize">{item.exercise.level}</Text>
                                                                 </View>
                                                                 <View className="flex-row">
-                                                                    <Text className="text-gray-400 w-24">Equipment:</Text>
-                                                                    <Text className="text-white flex-1 capitalize">{item.exercise.equipment}</Text>
+                                                                    <Text
+                                                                        className="text-gray-400 w-24">Equipment:</Text>
+                                                                    <Text
+                                                                        className="text-white flex-1 capitalize">{item.exercise.equipment}</Text>
                                                                 </View>
                                                             </View>
                                                         </View>
 
                                                         <View className="bg-blue-900/30 p-4 rounded-xl">
-                                                            <Text className="text-blue-400 font-bold text-sm mb-3">INSTRUCTIONS</Text>
+                                                            <Text
+                                                                className="text-blue-400 font-bold text-sm mb-3">INSTRUCTIONS</Text>
                                                             {item.exercise.instructions.map((instruction, index) => (
                                                                 <View key={index} className="flex-row mb-3 last:mb-0">
-                                                                    <Text className="text-blue-400 font-bold mr-2">{index + 1}.</Text>
-                                                                    <Text className="text-gray-300 flex-1 leading-5">{instruction}</Text>
+                                                                    <Text
+                                                                        className="text-blue-400 font-bold mr-2">{index + 1}.</Text>
+                                                                    <Text
+                                                                        className="text-gray-300 flex-1 leading-5">{instruction}</Text>
                                                                 </View>
                                                             ))}
                                                         </View>
@@ -461,7 +468,23 @@ const Workouts = () => {
                         />
                     )}
                 </View>
-                <View className="pb-16 px-2">
+                <View className="pb-16 p-2 mr-1 flex-row">
+                    <Pressable
+                        className="w-1/5 bg-red-600 p-3 rounded-lg items-center mr-1"
+                        onPress={() => {
+                        setCurrentWorkout('');
+                        setExercises([]);
+                        setDate(new Date());
+                        updateDateStrings(new Date());
+                            if (userData && userData.userId) {
+                                saveWorkoutToFirebase(userData.userId, '', []);
+                            } else {
+                                console.error("User data not available");
+                            }
+                    }}
+                    >
+                        <AntDesign name="delete" size={24} color="white"/>
+                    </Pressable>
                     <Pressable
                         onPress={() => {
                             console.log("Saving exercises:", exercises);
@@ -471,7 +494,7 @@ const Workouts = () => {
                                 console.error("User data not available");
                             }
                         }}
-                        className="w-full bg-orange-600 p-3 rounded-lg items-center"
+                        className="w-4/5 bg-orange-600 p-3 rounded-lg items-center ml-1"
                     >
                         {saving ? (
                             <ActivityIndicator color="#fff"/>
