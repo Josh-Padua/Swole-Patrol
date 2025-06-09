@@ -1,4 +1,4 @@
-import {View, Text, TextInput, TouchableOpacity, SafeAreaView} from 'react-native'
+import {View, Text, TextInput, TouchableOpacity, SafeAreaView, ScrollView} from 'react-native'
 import React, { useState } from 'react'
 import { router } from 'expo-router'
 import { auth, db } from '@/config/firebase'
@@ -31,14 +31,19 @@ const Onboarding = () => {
                 return
             }
 
-            if(!username.trim() || !height.trim() || !weight.trim()) {
+            if(!username.trim() || !height || !weight || !age || !gender) {
                 alert('Please fill in all fields.')
                 return
             }
 
+            const ageNumber = parseInt(age)
+            if (isNaN(ageNumber) || ageNumber <= 0 || ageNumber > 100) {
+                alert('Please enter a valid age between 1 and 100.')
+                return
+
+            }
             const heightNumber = parseFloat(height)
             const weightNumber = parseFloat(weight)
-            const ageNumber = parseInt(age)
             if (isNaN(heightNumber) || isNaN(weightNumber)) {
                 alert('Height and weight must be valid numbers.')
                 return
@@ -49,15 +54,15 @@ const Onboarding = () => {
 
             await updateDoc(userDocRef, {
                 username: username.trim(),
-                height: parseFloat(height),
-                weight: parseFloat(weight),
+                height: heightNumber,
+                weight: weightNumber,
                 age: ageNumber,
                 gender: gender,
                 bmi: parseFloat(bmi),
-                isOnboarded: true,
+                basicOnboarding: true,
                 updatedAt: new Date().toISOString()
             })
-            router.replace('/(pages)/(onboarding)/gymProgress')
+            router.push('/(pages)/(onboarding)/gymProgress')
         } catch (error) {
             console.error('Error saving user data:', error)
         }
@@ -65,7 +70,8 @@ const Onboarding = () => {
 
     return (
         <SafeAreaView className="flex-1 bg-primary-background p-4">
-            <Text className="text-white text-2xl font-lato-bold text-center">
+            <ScrollView>
+            <Text className="text-accent-orange text-2xl font-lato-bold text-center">
                 Let's get to know you better!
             </Text>
 
@@ -95,7 +101,7 @@ const Onboarding = () => {
 
                 <View className="mt-5">
                     <Text className="text-white mb-2">What's your gender?</Text>
-                    <View className="bg-primary rounded-lg">
+                    <View className="bg-primary rounded-lg flex-1 overflow-hidden">
                         <Picker
                             selectedValue={gender}
                             onValueChange={(itemValue) => setGender(itemValue)}
@@ -151,7 +157,14 @@ const Onboarding = () => {
                 >
                     <Text className="text-white font-lato-bold">Continue</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => router.push('/(pages)/(onboarding)/gymProgress')}
+                    className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-6"
+                >
+                    <Text className="text-white font-lato-bold">onboarding2</Text>
+                </TouchableOpacity>
             </View>
+            </ScrollView>
         </SafeAreaView>
     )
 }

@@ -58,10 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!loading) {
             if (user) {
                 if (userData) {
-                    if (userData?.isOnboarded) {
-                        router.replace('/');
-                    } else {
-                        router.replace('/(pages)/onboarding');
+                    if (!userData.basicOnboarding) {
+                        router.replace('/(pages)/(onboarding)/onboarding');
+                    } else if (!userData.gymOnboarding) {
+                        router.replace('/(pages)/(onboarding)/gymProgress');
+                    }
+                    else {
+                        router.replace('/(tabs)');
                     }
                 }
             } else {
@@ -90,7 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email,
                 createdAt: new Date().toISOString(),
                 userId: response.user.uid,
-                isOnboarded: false,
+                basicOnboarding: false,
+                gymOnboarding: false,
             });
 
             console.log(response);
