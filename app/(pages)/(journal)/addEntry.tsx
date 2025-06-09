@@ -56,6 +56,7 @@ export default function AddEntry() {
     const [sleepHours, setSleepHours] = useState('7');
     const [waterIntake, setWaterIntake] = useState('2');
     const [loadedFromLatest, setLoadedFromLatest] = useState(false);
+    const [loadedWorkoutDate, setLoadedWorkoutDate] = useState<Date | null>(null);
     const router = useRouter();
 
     const workoutRatingOptions = Array.from({ length: 10 }, (_, i) => String(i + 1));
@@ -94,6 +95,7 @@ export default function AddEntry() {
             setSleepHours('7');
             setWaterIntake('2');
             setLoadedFromLatest(false);
+            setLoadedWorkoutDate(null);
             router.back();
         } catch (error) {
             console.error(error);
@@ -126,11 +128,13 @@ export default function AddEntry() {
                 return;
             }
 
-            // Find latest workout with at least one exercise with reps > 0
             const latestWorkout =
                 sortedWorkouts.find((w) =>
                     w.exercises?.some((ex) => ex.sets?.some((s) => s.reps > 0))
                 ) ?? sortedWorkouts[0];
+
+            const workoutDate = getDate(latestWorkout.date);
+            setLoadedWorkoutDate(workoutDate);
 
             if (latestWorkout.exercises && latestWorkout.exercises.length > 0) {
                 const filteredExercises = latestWorkout.exercises.filter(
@@ -166,7 +170,8 @@ export default function AddEntry() {
         }
     };
 
-    const pickerContainerStyle = 'border border-gray-300 rounded-lg mb-4 bg-neutral-800 px-3 h-24 justify-center';
+    const pickerContainerStyle =
+        'border border-gray-300 rounded-lg mb-4 bg-neutral-800 px-3 h-24 justify-center';
 
     return (
         <SafeAreaView className="bg-primary-background h-full p-4">
@@ -179,7 +184,9 @@ export default function AddEntry() {
                         keyboardShouldPersistTaps="handled"
                         contentContainerStyle={{ paddingBottom: 40 }}
                     >
-                        <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-5">Log Your Workout</Text>
+                        <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-5">
+                            Log Your Workout
+                        </Text>
 
                         <TextInput
                             placeholder="Workout Title (e.g., Leg Day, Full Body)"
@@ -189,32 +196,46 @@ export default function AddEntry() {
                             placeholderTextColor="#A0A0A0"
                         />
 
-                        {loadedFromLatest ? (
-                            <View className="border border-gray-300 rounded-lg mb-4 p-3 bg-neutral-800 max-h-80">
-                                <ScrollView nestedScrollEnabled={true}>
-                                    <Text className="text-base text-gray-300 whitespace-pre-line">{workoutDetails}</Text>
-                                </ScrollView>
-                            </View>
-                        ) : (
-                            <>
-                                <TouchableOpacity onPress={loadLatestWorkout} className="bg-gray-700 py-2 px-4 rounded-lg mb-3">
-                                    <Text className="text-white text-center">Load Latest Workout</Text>
-                                </TouchableOpacity>
-                                <TextInput
-                                    placeholder="Workout Details (e.g., Sets, Reps, Weights, Exercises)"
-                                    value={workoutDetails}
-                                    onChangeText={setWorkoutDetails}
-                                    multiline
-                                    numberOfLines={6}
-                                    className="border border-gray-300 rounded-lg mb-4 p-3 text-base text-gray-300 h-32"
-                                    placeholderTextColor="#A0A0A0"
-                                    textAlignVertical="top"
-                                />
-                            </>
+                        <TouchableOpacity
+                            onPress={loadLatestWorkout}
+                            className="bg-gray-700 py-2 px-4 rounded-lg mb-3"
+                        >
+                            <Text className="text-white text-center">Load Latest Workout</Text>
+                        </TouchableOpacity>
+
+                        {loadedWorkoutDate && (
+                            <Text className="text-gray-400 text-sm mb-1">
+                                Loaded from: {loadedWorkoutDate.toLocaleDateString()}
+                            </Text>
                         )}
 
-                        {/* Workout Rating */}
-                        <Text className="font-lato text-gray-300 text-base mb-2">Rate your workout (1-10):</Text>
+                        <TextInput
+                            placeholder="Workout Details (e.g., Sets, Reps, Weights, Exercises)"
+                            value={workoutDetails}
+                            onChangeText={setWorkoutDetails}
+                            multiline
+                            numberOfLines={10}
+                            className="border border-gray-300 rounded-lg mb-2 p-3 text-base text-gray-300 bg-neutral-800 max-h-80"
+                            placeholderTextColor="#A0A0A0"
+                            textAlignVertical="top"
+                        />
+
+                        {loadedFromLatest && (
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setWorkoutDetails('');
+                                    setLoadedFromLatest(false);
+                                    setLoadedWorkoutDate(null);
+                                }}
+                                className="bg-red-600 py-2 px-4 rounded-lg mb-4"
+                            >
+                                <Text className="text-white text-center">Cancel Loaded Workout</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        <Text className="font-lato text-gray-300 text-base mb-2">
+                            Rate your workout (1-10):
+                        </Text>
                         <View className={pickerContainerStyle}>
                             <Picker
                                 selectedValue={workoutRating}
@@ -230,8 +251,9 @@ export default function AddEntry() {
                             </Picker>
                         </View>
 
-                        {/* Sleep Hours */}
-                        <Text className="font-lato text-gray-300 text-base mb-2">Hours of sleep last night:</Text>
+                        <Text className="font-lato text-gray-300 text-base mb-2">
+                            Hours of sleep last night:
+                        </Text>
                         <View className={pickerContainerStyle}>
                             <Picker
                                 selectedValue={sleepHours}
@@ -247,8 +269,9 @@ export default function AddEntry() {
                             </Picker>
                         </View>
 
-                        {/* Water Intake */}
-                        <Text className="font-lato text-gray-300 text-base mb-2">Water consumed today (Liters):</Text>
+                        <Text className="font-lato text-gray-300 text-base mb-2">
+                            Water consumed today (Liters):
+                        </Text>
                         <View className={pickerContainerStyle}>
                             <Picker
                                 selectedValue={waterIntake}
