@@ -166,7 +166,7 @@ const TemplateManager = () => {
     return (
         <SafeAreaView className="bg-primary-background h-full flex-1">
             <KeyboardAvoidingView style={{flex: 1}}>
-                <View className='flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2'>
+                <View className='flex-row items-center justify-center bg-primary m-2 rounded-lg p-2'>
                     <TextInput
                         placeholder="Workout Title"
                         className="font-bold text-xl text-white h-8 pt-0 pb-0 w-full"
@@ -178,7 +178,7 @@ const TemplateManager = () => {
                         <AntDesign name="save" size={24} color="#4096ff" onPress={saveWorkoutTemplate}/>
                     </Pressable>
                 </View>
-                <View className="flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2">
+                <View className="flex-row items-center justify-center bg-primary m-2 rounded-lg p-2 mb-0">
                     <TextInput
                         className='font-bold text-xl text-white h-fit pt-0 pb-0 w-full'
                         placeholder="Description"
@@ -282,7 +282,7 @@ const TemplateManager = () => {
                                 }}
                             />
                         </View>
-                        <View className='flex-1 flex-col items-start justify-center mt-4 bg-primary m-2 rounded-lg p-2'>
+                        <View className='flex-1 flex-col items-start justify-center mt-4 bg-primary m-2 rounded-lg p-2 mb-0'>
                             <Text className="text-white text-xl font-bold ml-2 pb-3">Selected exercises</Text>
                             <FlatList
                                 data={selectedExercises}
