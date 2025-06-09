@@ -64,7 +64,7 @@ const TemplateManager = () => {
             const exerciseDocs = await getDocs(exercisesCollection);
             // @ts-ignore
             const fetchedExercises: Exercise[] = exerciseDocs.docs.map(doc => {
-                const { id: fieldId, ...exerciseData } = doc.data();
+                const {id: fieldId, ...exerciseData} = doc.data();
                 return {
                     id: doc.id,
                     fieldId,
@@ -93,7 +93,7 @@ const TemplateManager = () => {
         } else {
             setSelectedIds(prev => new Set(prev).add(exercise.id));
             setSelectedExercises(prev => [...prev, exercise]);
-            setExerciseTemplates(prev => [...prev, { id: exercise.id, sets: 1 }]);
+            setExerciseTemplates(prev => [...prev, {id: exercise.id, sets: 1}]);
             setFilter("")
         }
     };
@@ -143,14 +143,11 @@ const TemplateManager = () => {
             setSelectedExercises([]);
             setSelectedIds(new Set());
             setDescription('');
+            alert('Workout template saved successfully!');
         } catch (error) {
+            console.error('Error saving workout template:', error);
+            alert('Failed to save workout template. Please try again.');
         }
-    };
-
-    const updateSets = (exerciseId: string, sets: number) => {
-        setExerciseTemplates(prev => prev.map(template =>
-            template.id === exerciseId ? { ...template, sets } : template
-        ));
     };
 
     useEffect(() => {
@@ -168,13 +165,15 @@ const TemplateManager = () => {
 
     return (
         <SafeAreaView className="bg-primary-background h-full flex-1">
-            <KeyboardAvoidingView style={{ flex: 1 }}>
+            <KeyboardAvoidingView style={{flex: 1}}>
                 <View className='flex-row items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2'>
                     <TextInput
                         placeholder="Workout Title"
                         className="font-bold text-xl text-white h-8 pt-0 pb-0 w-full"
                         value={title}
-                        onChangeText={setTitle}/>
+                        onChangeText={setTitle}
+                        maxLength={25}
+                    />
                     <Pressable className="absolute right-2 top-2">
                         <AntDesign name="save" size={24} color="#4096ff" onPress={saveWorkoutTemplate}/>
                     </Pressable>
@@ -187,6 +186,7 @@ const TemplateManager = () => {
                         multiline={true}
                         numberOfLines={2}
                         onChangeText={setDescription}
+                        maxLength={65} // Allows max of 2 lines text input resizing to fit 2 lines
                     />
                 </View>
                 {loading ? (
@@ -194,48 +194,70 @@ const TemplateManager = () => {
                         <ActivityIndicator size="large" color="white"/>
                     </View>
                 ) : (
-                    <View style={{ flex: 1 }}>
-                        <View className='flex-col items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2 h-fit max-h-96'>
+                    <View style={{flex: 1}}>
+                        <View
+                            className='flex-col items-center justify-center mt-4 bg-primary m-2 rounded-lg p-2 h-fit max-h-96'>
                             <View className="flex-row w-full mb-2">
                                 <View className="flex-row w-full mb-2">
-                                    <View style={{ flex: 1, height: 50, backgroundColor: '#374151', borderRadius: 8, overflow: 'hidden' }}>
+                                    <View style={{
+                                        flex: 1,
+                                        height: 50,
+                                        backgroundColor: '#374151',
+                                        borderRadius: 8,
+                                        overflow: 'hidden'
+                                    }}>
                                         <Picker
                                             selectedValue={selectedMuscle}
-                                            style={{ flex: 1, color: 'white', height: 50 }}
+                                            style={{flex: 1, color: 'white', height: 50}}
                                             onValueChange={setSelectedMuscle}
-                                            itemStyle={{ height: 50, fontSize: 16 }}
+                                            itemStyle={{height: 50, fontSize: 16}}
                                         >
-                                            <Picker.Item label="All Muscles" value="" />
+                                            <Picker.Item label="All Muscles" value=""/>
                                             {allMuscles.map(muscle => (
-                                                <Picker.Item key={muscle} label={muscle} value={muscle} />
+                                                <Picker.Item key={muscle} label={muscle} value={muscle}/>
                                             ))}
                                         </Picker>
                                     </View>
-                                    <View style={{ flex: 1, height: 50, backgroundColor: '#374151', borderRadius: 8, marginLeft: 8, overflow: 'hidden' }}>
+                                    <View style={{
+                                        flex: 1,
+                                        height: 50,
+                                        backgroundColor: '#374151',
+                                        borderRadius: 8,
+                                        marginLeft: 8,
+                                        overflow: 'hidden'
+                                    }}>
                                         <Picker
                                             selectedValue={selectedEquipment}
-                                            style={{ flex: 1, color: 'white', height: 50 }}
+                                            style={{flex: 1, color: 'white', height: 50}}
                                             onValueChange={setSelectedEquipment}
-                                            itemStyle={{ height: 50, fontSize: 16 }}
+                                            itemStyle={{height: 50, fontSize: 16}}
                                         >
-                                            <Picker.Item label="All Equipment" value="" />
+                                            <Picker.Item label="All Equipment" value=""/>
                                             {allEquipment.map(eq => (
-                                                <Picker.Item key={eq} label={eq} value={eq} />
+                                                <Picker.Item key={eq} label={eq} value={eq}/>
                                             ))}
                                         </Picker>
                                     </View>
                                 </View>
                             </View>
-                            <View className="flex-row items-center justify-between w-full mb-2">
+                            <View
+                                className="flex-row items-center bg-gray-800 border border-gray-500 rounded-lg m-2 px-3 py-2 shadow-md w-11/12 self-center mt-0">
+                                <AntDesign name="search1" size={22} color="#ea580c" className="mr-2"/>
                                 <TextInput
                                     placeholder="Search Exercises"
-                                    className="font-bold text-xl text-white h-8 pt-0 pb-0 m-2 w-11/12 bg-gray-700 rounded-lg"
+                                    placeholderTextColor="#9c6e33"
+                                    className="flex-1 font-bold text-lg text-white h-10"
                                     value={filter}
-                                    onChangeText={setFilter}/>
-                                <Pressable onPress={() => setFilter('')}>
-                                    <AntDesign name="closecircle" className='right-1 -top-1.5 absolute'/>
-                                </Pressable>
+                                    onChangeText={setFilter}
+                                    maxLength={25}
+                                />
+                                {filter.length > 0 && (
+                                    <Pressable onPress={() => setFilter('')}>
+                                        <AntDesign name="closecircle" size={22} color="#ea580c"/>
+                                    </Pressable>
+                                )}
                             </View>
+                            <View className="w-full border-t mt-1 m-2 border border-gray-500 rounded-lg"></View>
                             <FlatList
                                 data={filteredExercises}
                                 keyExtractor={(item, index) => item.id || index.toString()}
@@ -266,7 +288,7 @@ const TemplateManager = () => {
                                 data={selectedExercises}
                                 keyExtractor={(item, index) => item.id || index.toString()}
                                 className="w-full flex-1"
-                                contentContainerStyle={{ flexGrow: 1 }}
+                                contentContainerStyle={{flexGrow: 1}}
                                 renderItem={({item}) => (
                                     <View className="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700">
                                         <View className="flex-row items-center justify-between">
@@ -274,17 +296,6 @@ const TemplateManager = () => {
                                             <Pressable onPress={() => toggleExercise(item)}>
                                                 <AntDesign name="delete" size={24} color="red" className=""/>
                                             </Pressable>
-                                        </View>
-                                        <View className="flex-row items-center justify-between mt-2">
-                                            <Text className="text-white text-lg font-bold">Number of sets</Text>
-                                            <TextInput
-                                                placeholder="Sets"
-                                                className="text-white text-sm w-16 bg-gray-700 rounded-lg "
-                                                onChangeText={(text) => {
-                                                    const sets = parseInt(text) || 1;
-                                                    updateSets(item.id, sets);
-                                                }}
-                                            />
                                         </View>
                                         {isExerciseExpanded(item.id) ? (
                                             <View>
