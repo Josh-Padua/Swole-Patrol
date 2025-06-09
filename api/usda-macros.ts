@@ -1,6 +1,7 @@
 import {doc, getDoc} from "firebase/firestore";
 import {db} from "../config/firebase";
 import {MacronutrientProfile, sanitiseString} from "./meal-macros-library";
+import {unflatten} from "react-native-reanimated/lib/typescript/animation/transformationMatrix/matrixUtils";
 
 
 const NUTRIENT_ID_WHITELIST:number[] = [1003, 1004, 1005, 1008];
@@ -57,6 +58,36 @@ function parseFoodData(usdaJsonResp:any, query:string):detailedFoodData[] {
     );
 }
 
+function parseMacronutrients(nutrients: nutrientData[]): MacronutrientProfile {
+    const profile: MacronutrientProfile = {
+        calories: 0,
+        protein: 0,
+        carbohydrates: 0,
+        fats: 0,
+    };
+
+    for (const nutrient of nutrients) {
+        switch (nutrient.nutrientId) {
+            case 1003:
+                profile.protein = nutrient.value;
+                break;
+            case 1004:
+                profile.fats = nutrient.value;
+                break;
+            case 1005:
+                profile.carbohydrates = nutrient.value;
+                break;
+            case 1008:
+                profile.calories = nutrient.value;
+                break;
+            default:
+                break;
+        }
+    }
+
+    return profile;
+}
+
 async function getFoods(query:string):Promise<detailedFoodData[]|undefined> {
     const apiKey = await getAPIKey();
     const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${query}&dataType=Survey%20%28FNDDS%29&pageSize=10&pageNumber=1&sortBy=dataType.keyword&sortOrder=asc&requireAllWords=true`
@@ -73,10 +104,14 @@ async function getFoods(query:string):Promise<detailedFoodData[]|undefined> {
     }
 }
 
-export async function getNewFoodMacros(food:string):Promise<MacronutrientProfile> {
+export async function getNewFoodMacros(food:string):Promise<MacronutrientProfile|null> {
+    const foods = await getFoods(food);
+    if (foods == undefined || foods.length < 1)
+        return null;
 
+    return parseMacronutrients(foods[0].foodNutrients);
 }
 
 export async function test() {
-    await getFoods("milk");
+    console.log(await getNewFoodMacros("milk"));
 }
