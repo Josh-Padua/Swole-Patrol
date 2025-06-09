@@ -153,7 +153,7 @@ export default function ViewEntries() {
     }
 
     return (
-        <SafeAreaView className="h-full bg-primary-background">
+        <SafeAreaView className="flex-1 bg-primary-background">
             <ScrollView className="p-4">
                 <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-5">Your Workout Logs</Text>
 
