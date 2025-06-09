@@ -194,6 +194,12 @@ const Macros = () => {
                     title="Submit"
                     onPress={handleSubmit}
                 />
+
+                {!knownMeals && (
+                    <View className={'items-center'}>
+                        <Text className={'text-l'} style={{color: '#6261FF'}}>New meal - Imported from USDA</Text>
+                    </View>
+                )}
             </View>
 
             <View className={'bg-[#2D2E31] p-5 rounded-lg w-80 max-w-md mb-5'}>
