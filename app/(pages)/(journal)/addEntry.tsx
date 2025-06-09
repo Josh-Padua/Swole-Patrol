@@ -1,23 +1,76 @@
 import React, { useState } from 'react';
-import {View, Text, TextInput, Button, Alert, Image, TouchableOpacity, SafeAreaView} from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    Alert,
+    TouchableOpacity,
+    SafeAreaView,
+    Platform,
+    KeyboardAvoidingView,
+    ScrollView,
+    Keyboard,
+    TouchableWithoutFeedback,
+} from 'react-native';
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
+import { Picker } from '@react-native-picker/picker';
+
+interface Set {
+    reps: number;
+    weight: number;
+}
+
+interface Exercise {
+    name: string;
+    sets: Set[];
+}
+
+interface WorkoutDoc {
+    workoutTitle?: string;
+    workoutDetails?: string;
+    workoutRating?: number;
+    sleepHours?: number;
+    waterIntake?: number;
+    date?: Timestamp | Date | any;
+    exercises?: Exercise[];
+    uid?: string;
+}
+
+function getDate(date: any): Date {
+    if (date?.toDate && typeof date.toDate === 'function') {
+        return date.toDate();
+    } else if (date instanceof Date) {
+        return date;
+    } else {
+        return new Date(date);
+    }
+}
 
 export default function AddEntry() {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
+    const [workoutTitle, setWorkoutTitle] = useState('');
+    const [workoutDetails, setWorkoutDetails] = useState('');
+    const [workoutRating, setWorkoutRating] = useState('5');
+    const [sleepHours, setSleepHours] = useState('7');
+    const [waterIntake, setWaterIntake] = useState('2');
+    const [loadedFromLatest, setLoadedFromLatest] = useState(false);
+    const [loadedWorkoutDate, setLoadedWorkoutDate] = useState<Date | null>(null);
     const router = useRouter();
 
+    const workoutRatingOptions = Array.from({ length: 10 }, (_, i) => String(i + 1));
+    const sleepHoursOptions = Array.from({ length: 15 }, (_, i) => String(i + 1));
+    const waterIntakeOptions = Array.from({ length: 10 }, (_, i) => String(i + 1));
+
     const handleSave = async () => {
-        if (!title || !content) {
-            Alert.alert('Error', 'Title and entry cannot be empty.');
+        if (!workoutTitle || !workoutDetails) {
+            Alert.alert('Error', 'Please fill in workout title and details.');
             return;
         }
 
         try {
-            const auth = getAuth(); // Get current Firebase Auth instance
+            const auth = getAuth();
             const user = auth.currentUser;
 
             if (!user) {
@@ -25,50 +78,231 @@ export default function AddEntry() {
                 return;
             }
 
-            await addDoc(collection(db, 'journalEntries'), {
-                title,
-                content,
+            await addDoc(collection(db, 'workoutLogs'), {
+                workoutTitle,
+                workoutDetails,
+                workoutRating: parseInt(workoutRating),
+                sleepHours: parseFloat(sleepHours),
+                waterIntake: parseFloat(waterIntake),
                 date: new Date(),
                 uid: user.uid,
             });
 
-            Alert.alert('Success', 'Entry saved!');
-            setTitle('');
-            setContent('');
+            Alert.alert('Success', 'Workout Log saved!');
+            setWorkoutTitle('');
+            setWorkoutDetails('');
+            setWorkoutRating('5');
+            setSleepHours('7');
+            setWaterIntake('2');
+            setLoadedFromLatest(false);
+            setLoadedWorkoutDate(null);
             router.back();
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'Could not save entry.');
+            Alert.alert('Error', 'Could not save workout log.');
         }
     };
 
+    const loadLatestWorkout = async () => {
+        try {
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (!user) {
+                Alert.alert('Error', 'User not logged in.');
+                return;
+            }
+
+            const workoutsRef = collection(db, `users/${user.uid}/workouts`);
+            const snapshot = await getDocs(workoutsRef);
+
+            const workouts: WorkoutDoc[] = snapshot.docs.map((doc) => doc.data() as WorkoutDoc);
+
+            const sortedWorkouts = workouts.sort((a, b) => {
+                const dateA = getDate(a.date);
+                const dateB = getDate(b.date);
+                return dateB.getTime() - dateA.getTime();
+            });
+
+            if (sortedWorkouts.length === 0) {
+                Alert.alert('No workouts found.');
+                return;
+            }
+
+            const latestWorkout =
+                sortedWorkouts.find((w) =>
+                    w.exercises?.some((ex) => ex.sets?.some((s) => s.reps > 0))
+                ) ?? sortedWorkouts[0];
+
+            const workoutDate = getDate(latestWorkout.date);
+            setLoadedWorkoutDate(workoutDate);
+
+            if (latestWorkout.exercises && latestWorkout.exercises.length > 0) {
+                const filteredExercises = latestWorkout.exercises.filter(
+                    (ex) => ex.sets && ex.sets.some((s) => s.reps > 0)
+                );
+
+                if (filteredExercises.length === 0) {
+                    Alert.alert('No exercises with reps in the latest workout.');
+                    return;
+                }
+
+                const formattedDetails = filteredExercises
+                    .map((ex, i) => {
+                        const sets = ex.sets
+                            .filter((s) => s.reps > 0)
+                            .map((s, j) => `  Set ${j + 1}: ${s.reps} reps @ ${s.weight}kg`)
+                            .join('\n');
+                        return `Exercise ${i + 1}: ${ex.name}\n${sets}`;
+                    })
+                    .join('\n\n');
+
+                setWorkoutDetails(formattedDetails);
+                setLoadedFromLatest(true);
+            } else if (latestWorkout.workoutDetails) {
+                setWorkoutDetails(latestWorkout.workoutDetails);
+                setLoadedFromLatest(true);
+            } else {
+                Alert.alert('No details found in latest workout.');
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Could not load latest workout.');
+        }
+    };
+
+    const pickerContainerStyle =
+        'border border-gray-300 rounded-lg mb-4 bg-neutral-800 px-3 h-24 justify-center';
+
     return (
-        <SafeAreaView className="bg-primary-background h-full">
+        <SafeAreaView className="bg-primary-background h-full p-4">
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{ flex: 1 }}
+            >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <ScrollView
+                        keyboardShouldPersistTaps="handled"
+                        contentContainerStyle={{ paddingBottom: 40 }}
+                    >
+                        <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-5">
+                            Log Your Workout
+                        </Text>
 
-            <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-5">Add Journal Entry</Text>
-            <TextInput
-                placeholder="Title"
-                value={title}
-                onChangeText={setTitle}
-                className="border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
-            />
-            <TextInput
-                placeholder="Write your thoughts..."
-                value={content}
-                onChangeText={setContent}
-                multiline
-                numberOfLines={6}
-                className="border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
-            />
-            <TouchableOpacity onPress={handleSave}
-                className="bg-accent-orange py-3 px-6 rounded-lg items-center">
-                <Text className="font-lato text-white">Save Entry</Text>
-            </TouchableOpacity>
+                        <TextInput
+                            placeholder="Workout Title (e.g., Leg Day, Full Body)"
+                            value={workoutTitle}
+                            onChangeText={setWorkoutTitle}
+                            className="border border-gray-300 rounded-lg mb-4 p-3 text-base text-gray-300"
+                            placeholderTextColor="#A0A0A0"
+                        />
 
-            <TouchableOpacity onPress={() => router.back()}
-                              className="bg-accent-orange py-3 ml-96 mr-96 px-6 rounded-lg items-center mt-5">
-                <Text className="font-lato text-white">Return</Text>
-            </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={loadLatestWorkout}
+                            className="bg-gray-700 py-2 px-4 rounded-lg mb-3"
+                        >
+                            <Text className="text-white text-center">Load Latest Workout</Text>
+                        </TouchableOpacity>
+
+                        {loadedWorkoutDate && (
+                            <Text className="text-gray-400 text-sm mb-1">
+                                Loaded from: {loadedWorkoutDate.toLocaleDateString()}
+                            </Text>
+                        )}
+
+                        <TextInput
+                            placeholder="Workout Details (e.g., Sets, Reps, Weights, Exercises)"
+                            value={workoutDetails}
+                            onChangeText={setWorkoutDetails}
+                            multiline
+                            numberOfLines={10}
+                            className="border border-gray-300 rounded-lg mb-2 p-3 text-base text-gray-300 bg-neutral-800 max-h-80"
+                            placeholderTextColor="#A0A0A0"
+                            textAlignVertical="top"
+                        />
+
+                        {loadedFromLatest && (
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setWorkoutDetails('');
+                                    setLoadedFromLatest(false);
+                                    setLoadedWorkoutDate(null);
+                                }}
+                                className="bg-red-600 py-2 px-4 rounded-lg mb-4"
+                            >
+                                <Text className="text-white text-center">Cancel Loaded Workout</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        <Text className="font-lato text-gray-300 text-base mb-2">
+                            Rate your workout (1-10):
+                        </Text>
+                        <View className={pickerContainerStyle}>
+                            <Picker
+                                selectedValue={workoutRating}
+                                onValueChange={setWorkoutRating}
+                                style={{ color: 'white', fontSize: 18, height: 60 }}
+                                itemStyle={{ color: 'white', fontSize: 18, height: 60 }}
+                                mode="dropdown"
+                                dropdownIconColor="white"
+                            >
+                                {workoutRatingOptions.map((value) => (
+                                    <Picker.Item key={value} label={value} value={value} />
+                                ))}
+                            </Picker>
+                        </View>
+
+                        <Text className="font-lato text-gray-300 text-base mb-2">
+                            Hours of sleep last night:
+                        </Text>
+                        <View className={pickerContainerStyle}>
+                            <Picker
+                                selectedValue={sleepHours}
+                                onValueChange={setSleepHours}
+                                style={{ color: 'white', fontSize: 18, height: 60 }}
+                                itemStyle={{ color: 'white', fontSize: 18, height: 60 }}
+                                mode="dropdown"
+                                dropdownIconColor="white"
+                            >
+                                {sleepHoursOptions.map((value) => (
+                                    <Picker.Item key={value} label={`${value} hours`} value={value} />
+                                ))}
+                            </Picker>
+                        </View>
+
+                        <Text className="font-lato text-gray-300 text-base mb-2">
+                            Water consumed today (Liters):
+                        </Text>
+                        <View className={pickerContainerStyle}>
+                            <Picker
+                                selectedValue={waterIntake}
+                                onValueChange={setWaterIntake}
+                                style={{ color: 'white', fontSize: 18, height: 60 }}
+                                itemStyle={{ color: 'white', fontSize: 18, height: 60 }}
+                                mode="dropdown"
+                                dropdownIconColor="white"
+                            >
+                                {waterIntakeOptions.map((value) => (
+                                    <Picker.Item key={value} label={`${value} Liters`} value={value} />
+                                ))}
+                            </Picker>
+                        </View>
+
+                        <TouchableOpacity
+                            onPress={handleSave}
+                            className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-4"
+                        >
+                            <Text className="font-lato text-white text-base">Save Workout Log</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-5"
+                        >
+                            <Text className="font-lato text-white text-base">Return</Text>
+                        </TouchableOpacity>
+                    </ScrollView>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
