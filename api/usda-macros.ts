@@ -56,7 +56,7 @@ function parseFoodData(usdaJsonResp:any, query:string):detailedFoodData[] {
 
         result.push({
             fdcId: food.fdcId,
-            description: cleanDescription,
+            description: food.description,
             foodNutrients: filteredNutrients.map((nutrient: any) => ({
                 nutrientId: nutrient.nutrientId,
                 nutrientName: nutrient.nutrientName,
