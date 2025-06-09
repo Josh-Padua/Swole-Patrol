@@ -1,7 +1,9 @@
-import {View, Text, SafeAreaView, FlatList} from 'react-native'
+import {View, Text, SafeAreaView, FlatList, TouchableOpacity} from 'react-native'
 import React from 'react'
 import {StripeProvider} from "@stripe/stripe-react-native";
 import Checkout from "@/components/checkout";
+import {auth, db} from "@/config/firebase";
+import {doc, updateDoc} from "firebase/firestore";
 
 const Premium = () => {
 
@@ -11,6 +13,32 @@ const Premium = () => {
         { id: '3', title: 'Exclusive Workout library + meal database'},
         { id: '4', title: 'Investing in what matters. You.'}
     ]
+
+    const upgradeToPremium = async () => {
+        try {
+            const userId = auth.currentUser?.uid
+            if (!userId) {
+                console.error('No user ID found')
+                return
+            }
+
+            const userDocRef = doc(db, 'users', userId)
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists() && userDocSnap.data().premiumMember) {
+                Alert.alert('Already have Premium', 'You are already a premium member.');
+                return;
+            }
+
+            await updateDoc(userDocRef, {
+                premiumMember: true,
+                updatedAt: new Date().toISOString()
+            })
+
+        } catch (error) {
+            console.error('Error saving user data:', error)
+        }
+    }
 
     return (
         <StripeProvider
@@ -35,6 +63,12 @@ const Premium = () => {
                     )}
                 />
                     <View className="mb-5">
+                        <TouchableOpacity
+                            onPress={upgradeToPremium}
+                            className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-6"
+                        >
+                            <Text className="text-white font-lato-bold">Upgrade to Premium</Text>
+                        </TouchableOpacity>
                         <Checkout/>
                     </View>
                 </View>
