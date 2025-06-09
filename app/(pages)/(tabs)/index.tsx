@@ -141,6 +141,7 @@ export default function Index() {
                                 datasets: [
                                     {
                                         data: [validateChartData(kCal), validateChartData(protein), validateChartData(carbs), validateChartData(fats)], // Uses API to take data from Firebase to display
+
                                     },
                                 ],
                             }}
