@@ -1,6 +1,14 @@
 import React, {useEffect, useState} from 'react'
 import { View, Text, TextInput, Button, FlatList, TouchableOpacity } from 'react-native'
-import {queryMeals, getPossibleMatches, getMeal, addNewMeal, MealData, MacronutrientProfile} from "@/api/meal-macros-library";
+import {
+    queryMeals,
+    getPossibleMatches,
+    getMeal,
+    addNewMeal,
+    MealData,
+    MacronutrientProfile,
+    sanitiseString
+} from "@/api/meal-macros-library";
 import {getMacros, setMacros} from "@/api/user-macros";
 import StatusBar from "@/components/statusBar";
 import {setGoals} from "@/api/user-macro-goals";
@@ -80,22 +88,26 @@ const Macros = () => {
      */
     const handleInputChange = async (text:string) => {
         setMealText(text);
+        const cleanText = sanitiseString(text)
 
-        if (text.length > 0) {
+        if (cleanText.length > 0) {
             // Retrieve new meal set
             if (mealSet.length == 0) {
-                mealSet = await queryMeals(text)
+                mealSet = await queryMeals(cleanText)
                 knownMeals = true;
             }
 
             // Filter meals, to provide suggestions
-            var filteredMeals:string[] = await getPossibleMatches(text, mealSet);
+            var filteredMeals:string[] = await getPossibleMatches(cleanText, mealSet);
             if (filteredMeals.length == 0) {
-                const existingMealsKeys = new Set(mealSet.map(meal => meal.name));
-                mealSet.push(...(await getNewMeals(text)).filter(meal => !existingMealsKeys.has(meal.name)));
+                // Add new meals
+                for (const newMeal of await getNewMeals(cleanText)) {
+                    if (!((mealSet.map(meal => sanitiseString(meal.name))).includes(sanitiseString(newMeal.name))))
+                        mealSet.push(newMeal);
+                }
                 knownMeals = false;
 
-                filteredMeals = await getPossibleMatches(text, mealSet);
+                filteredMeals = await getPossibleMatches(cleanText, mealSet);
             } // Find new meals
 
             setFilteredSuggestions(filteredMeals);
@@ -144,6 +156,7 @@ const Macros = () => {
 
         console.log(`Submitted: ${mealData?.name}${!knownMeals? " (a new meal)" : ""}`);
 
+        knownMeals = true;
         setMealText(""); // Reset input
     };
 
