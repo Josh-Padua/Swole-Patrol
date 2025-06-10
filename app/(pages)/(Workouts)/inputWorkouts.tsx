@@ -361,6 +361,10 @@ const Workouts = () => {
                                 <View className="flex-1 justify-center items-center">
                                     <Text className="text-white text-lg">No templates found</Text>
                                     <TouchableOpacity
+                                        onPress={() => {
+                                        setShowTemplates(false);
+                                        router.push('/(pages)/(Workouts)/templateManager')
+                                    }}
                                         className="bg-orange-600 px-4 py-2 rounded-lg mt-4"
                                     >
                                         <Text className="text-white">Create Default Templates</Text>
