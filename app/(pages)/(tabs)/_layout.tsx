@@ -44,14 +44,16 @@ const TabsLayout = () => {
                     headerShown: false,
                 }}
             />
+            
             <Tabs.Screen
-                name="stopwatch"
-                options={{
-                    title: 'Stopwatch',
-                    headerShown: false,
-                }}
-            />
+            name="leaderboard"
+            options={{
+                title: 'Leaderboard',
+                headerShown: false,
+            }}
+        />
             <Tabs.Screen
+
                 name="profile"
                 options={{
                     title: 'Profile',
