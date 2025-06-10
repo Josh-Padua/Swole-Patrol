@@ -18,11 +18,11 @@ interface User {
     height?: number;
     weight?: number;
     workoutFrequency?: string;
-    timeInGym: number; // Added for hardcoded time spent in gym (in minutes for example)
+    timeInGym?: number; // Now optional, as it might not be present for all users
 }
 
 // Define filter categories
-type FilterCategory = 'timeInGym' | 'age' | 'bmi' | 'height' | 'weight' | 'gymLevel' | 'workoutFrequency'; // Removed 'username'
+type FilterCategory = 'timeInGym' | 'age' | 'bmi' | 'height' | 'weight' | 'gymLevel' | 'workoutFrequency';
 
 const Leaderboard = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -37,9 +37,6 @@ const Leaderboard = () => {
             const snapshot = await getDocs(q);
             const userList: User[] = snapshot.docs.map((doc) => {
                 const data = doc.data();
-                // Hardcode timeInGym for demonstration. In a real app, this would come from data.
-                const hardcodedTimeInGym = Math.floor(Math.random() * 1000) + 100; // Random time between 100 and 1100 minutes
-
                 return {
                     id: doc.id,
                     username: data.username || 'Unknown',
@@ -54,7 +51,7 @@ const Leaderboard = () => {
                     height: data.height || undefined,
                     weight: data.weight || undefined,
                     workoutFrequency: data.workoutFrequency || undefined,
-                    timeInGym: hardcodedTimeInGym, // Hardcoded value
+                    timeInGym: data.timeInGym || 0, // Read from Firestore, default to 0 if not present
                 };
             });
             setUsers(userList);
@@ -75,16 +72,25 @@ const Leaderboard = () => {
             const aValue = a[activeFilter];
             const bValue = b[activeFilter];
 
-            if (aValue === undefined && bValue === undefined) return 0;
-            if (aValue === undefined) return sortOrder === 'asc' ? 1 : -1;
-            if (bValue === undefined) return sortOrder === 'asc' ? -1 : 1;
+            // Handle cases where values might be undefined or different types for sorting
+            let valA: any = aValue;
+            let valB: any = bValue;
 
-            if (typeof aValue === 'string' && typeof bValue === 'string') {
-                return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-            } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-                return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+            // Ensure undefined/null numeric values are treated as 0 for sorting
+            if (typeof aValue === 'number' || activeFilter === 'timeInGym' || activeFilter === 'age' || activeFilter === 'bmi' || activeFilter === 'height' || activeFilter === 'weight') {
+                valA = aValue ?? 0; // Use nullish coalescing for default 0
+                valB = bValue ?? 0;
+            } else if (typeof aValue === 'string') {
+                valA = aValue ?? '';
+                valB = bValue ?? '';
             }
-            return 0;
+
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            } else if (typeof valA === 'number' && typeof valB === 'number') {
+                return sortOrder === 'asc' ? valA - valB : valB - valA;
+            }
+            return 0; // Fallback for other or mixed types
         });
     }, [activeFilter, sortOrder]);
 
@@ -95,6 +101,7 @@ const Leaderboard = () => {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); // Toggle sort order if same filter is pressed
         } else {
             setActiveFilter(filter);
+            // Default sort order for numerical values should often be descending (higher is better)
             setSortOrder(filter === 'timeInGym' || filter === 'age' || filter === 'bmi' || filter === 'height' || filter === 'weight' ? 'desc' : 'asc');
         }
     };
@@ -103,7 +110,7 @@ const Leaderboard = () => {
         let header = '';
         switch (filter) {
             case 'timeInGym':
-                header = 'Time in Gym (min)';
+                header = 'Time in Gym (MM:SS)'; // Display format on leaderboard
                 break;
             case 'age':
                 header = 'Age';
@@ -132,6 +139,17 @@ const Leaderboard = () => {
             </Text>
         );
     };
+
+    // Helper to format total seconds into MM:SS format for display
+    const formatTotalSecondsToMinutesSeconds = (totalSeconds: number | undefined) => {
+        if (totalSeconds === undefined || totalSeconds === null) {
+            return 'N/A';
+        }
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+
 
     if (loading) {
         return (
@@ -202,7 +220,10 @@ const Leaderboard = () => {
                         <Text className="text-gray-300 w-1/12 text-center">{index + 1}</Text>
                         <Text className="text-gray-300 w-4/12">{item.username}</Text>
                         <Text className="text-gray-300 w-4/12 text-center">
-                            {item[activeFilter] !== undefined ? item[activeFilter]?.toString() : 'N/A'}
+                            {activeFilter === 'timeInGym'
+                                ? formatTotalSecondsToMinutesSeconds(item.timeInGym) // Use helper for timeInGym
+                                : (item[activeFilter] !== undefined ? item[activeFilter]?.toString() : 'N/A')
+                            }
                         </Text>
                     </View>
                 )}
@@ -216,26 +237,17 @@ interface FilterButtonProps {
     isActive: boolean;
     onPress: () => void;
 }
+
 const FilterButton: React.FC<FilterButtonProps> = ({ title, isActive, onPress }) => (
     <TouchableOpacity
         onPress={onPress}
-        className={`mx-1 rounded-full ${isActive ? 'bg-accent-orange' : 'bg-gray-700'}`}
-        style={{
-            paddingVertical: 10,
-            paddingHorizontal: 14,
-            minWidth: 100,
-            minHeight: 30,
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: 9999,
-        }}
+        className={`px-4 py-2 rounded-full mx-1 ${isActive ? 'bg-accent-orange' : 'bg-gray-700'}`}
     >
-        <Text
-            className={`font-lato-regular text-center ${isActive ? 'text-white' : 'text-gray-300'}`}
-            style={{ fontSize: 10, lineHeight: 15 }}
-        >
+        <Text className={`font-lato-regular ${isActive ? 'text-white' : 'text-gray-300'}`}>
             {title}
         </Text>
     </TouchableOpacity>
 );
+
+
 export default Leaderboard;
