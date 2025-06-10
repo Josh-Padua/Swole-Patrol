@@ -46,6 +46,8 @@ export default function Calculator() {
     const [output, setOutput] = useState('20kg: 0\n15kg: 0\n10kg: 0\n5kg: 0\n\n(Estimated)');
 
     const handleOnChange = (text: string)=> {
+        if (parseInt(text) < 20) return;
+
         const result = calculatePlates(barWeight, parseInt(text));
         if (result == null) return;
 
