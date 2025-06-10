@@ -52,18 +52,20 @@ const Settings = () => {
                     {/*Text fields to enter what User wants to update*/}
                     <TextInput
                         placeholder="First Name"
+                        placeholderTextColor={'#757575'}
                         value={firstName}
                         onChangeText={setFirstName}
-                        className="border border-gray-300 rounded-lg mb-2 text-base text-gray-300"
+                        className="border border-gray-300 rounded-lg mb-2 text-base text-gray-300 w-80"
                     />
                 </View>
                 <View className="flex-row items-center gap-4">
                     {/*Text fields to enter what User wants to update*/}
                     <TextInput
                         placeholder="Last Name"
+                        placeholderTextColor={'#757575'}
                         value={lastName}
                         onChangeText={setLastName}
-                        className="border border-gray-300 rounded-lg mb-2 text-base text-gray-300"
+                        className="border border-gray-300 rounded-lg mb-2 text-base text-gray-300 w-80"
                     />
                 </View>
                 {/*Update Firebase Details*/}

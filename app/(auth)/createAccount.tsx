@@ -60,7 +60,7 @@ const CreateAccount = () => {
 
                 <TextInput
                     placeholder="First Name"
-                    placeholderTextColor="6b7280"
+                    placeholderTextColor={'#757575'}
                     value={firstName}
                     onChangeText={setFirstName}
                     className="w-full p-3 border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
@@ -68,7 +68,7 @@ const CreateAccount = () => {
 
                 <TextInput
                     placeholder="Last Name"
-                    placeholderTextColor="6b7280"
+                    placeholderTextColor={'#757575'}
                     value={lastName}
                     onChangeText={setLastName}
                     className="w-full p-3 border border-gray-300 rounded-lg mb-4 text-base text-gray-300"
@@ -76,7 +76,7 @@ const CreateAccount = () => {
 
                 <TextInput
                     placeholder="Email Address"
-                    placeholderTextColor="6b7280"
+                    placeholderTextColor={'#757575'}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -86,7 +86,7 @@ const CreateAccount = () => {
 
                 <TextInput
                     placeholder="Password"
-                    placeholderTextColor="6b7280"
+                    placeholderTextColor={'#757575'}
                     secureTextEntry
                     value={password}
                     onChangeText={setPassword}
@@ -95,7 +95,7 @@ const CreateAccount = () => {
 
                 <TextInput
                     placeholder="Confirm Password"
-                    placeholderTextColor="6b7280"
+                    placeholderTextColor={'#757575'}
                     secureTextEntry
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
