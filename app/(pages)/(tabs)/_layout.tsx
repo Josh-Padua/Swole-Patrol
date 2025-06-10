@@ -45,13 +45,6 @@ const TabsLayout = () => {
                 }}
             />
             <Tabs.Screen
-                name="stopwatch"
-                options={{
-                    title: 'Stopwatch',
-                    headerShown: false,
-                }}
-            />
-            <Tabs.Screen
                 name="profile"
                 options={{
                     title: 'Profile',
