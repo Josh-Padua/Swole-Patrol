@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
     View,
     Text,
@@ -23,6 +23,7 @@ import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Picker} from '@react-native-picker/picker';
 import {AntDesign} from "@expo/vector-icons";
+import {useFocusEffect} from '@react-navigation/native';
 
 const dummyProgressData = [
     {date: '2024-05-01', weight: 60},
@@ -334,26 +335,20 @@ const ViewWorkouts = () => {
         setStreak({currentStreak: newStreak, lastCheckin: formatDateYYYYMMDD(new Date())});
     }
 
-    useEffect(() => {
-        const selectedExercise = exercises[selectedExerciseIndex];
-        if (selectedExercise && userData?.userId) {
-            fetchAndUpdateGoal(selectedExercise.id);
-        }
-    }, [exercises, selectedExerciseIndex, userData]);
-
-    useEffect(() => {
-        const daysNum = typeof days === 'string' ? parseInt(days) : days;
-        if (!isNaN(daysNum) && daysNum > 0) {
-            getChartData(daysNum, "sFtHfYh6UyXjd6Il8oma");
-        }
-        loadGallery();
-    }, []);
-
-    useEffect(() => {
-        if (userData?.userId) {
-            getStreakFromFirebase();
-        }
-    }, [userData?.userId]);
+    useFocusEffect(
+        React.useCallback(() => {
+            const daysNum = typeof days === 'string' ? parseInt(days) : days;
+            if (!isNaN(daysNum) && daysNum > 0 && userData?.userId) {
+                getChartData(daysNum, "sFtHfYh6UyXjd6Il8oma");
+                getStreakFromFirebase();
+                loadGallery();
+                const selectedExercise = exercises[selectedExerciseIndex];
+                if (selectedExercise) {
+                    fetchAndUpdateGoal(selectedExercise.id);
+                }
+            }
+        }, [userData?.userId, days, exercises, selectedExerciseIndex])
+    );
 
     return (
         <ScrollView className="flex-1 bg-zinc-900 px-4 py-4 mb-14">
@@ -424,7 +419,7 @@ const ViewWorkouts = () => {
                     onPress={openExerciseModal}
                 >
                     <Text className="text-white text-base">
-                        {exercises[selectedExerciseIndex]?.name || 'Loading...'}
+                        {exercises[selectedExerciseIndex]?.name || 'Select Exercise'}
                     </Text>
                 </Pressable>
             </View>
