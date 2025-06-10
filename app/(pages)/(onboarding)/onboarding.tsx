@@ -2,7 +2,7 @@ import {View, Text, TextInput, TouchableOpacity, SafeAreaView, ScrollView, Alert
 import React, { useState } from 'react'
 import { router } from 'expo-router'
 import { auth, db } from '@/config/firebase'
-// import { doc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc } from 'firebase/firestore' // need to comment out for testing
 import { Picker } from '@react-native-picker/picker'
 
 // jest
