@@ -37,7 +37,6 @@ describe('Plate Calculator', () => {
 
         it('should calculate the plate set correctly', () => {
             const result = calculatePlates(barWeight, (25 + barWeight + 25));
-            console.log(result);
 
             if (result == null) fail('result should not be null');
 

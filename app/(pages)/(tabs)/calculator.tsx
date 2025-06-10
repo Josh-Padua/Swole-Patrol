@@ -1,4 +1,5 @@
-import {View} from "react-native";
+import {Text, TextInput, View} from "react-native";
+import React, {useState} from "react";
 
 
 export type PlateSet = {
@@ -41,9 +42,37 @@ export function calculatePlates(barWeight: number, targetWeight:number):PlateSet
 }
 
 export default function Calculator() {
+    const barWeight = 20;
+    const [output, setOutput] = useState('20kg: 0\n15kg: 0\n10kg: 0\n5kg: 0\n\n(Estimated)');
+
+    const handleOnChange = (text: string)=> {
+        const result = calculatePlates(barWeight, parseInt(text));
+        if (result == null) return;
+
+        setOutput(`20kg: ${result.p20kg}\n15kg: ${result.p15kg}\n10kg: ${result.p10kg}\n5kg: ${result.p5kg}\n\n(Estimated)`);
+    }
 
     return (
         <View className="items-center bg-primary-background h-full max-w-screen">
+            <Text className={'text-white text-3xl m-10'}>Plate Calculator</Text>
+
+
+            <View className={'bg-[#2D2E31] p-5 rounded-lg w-80 max-w-md mb-5'}>
+                <TextInput
+                    placeholder="Expected weight"
+                    placeholderTextColor={'#757575'}
+                    className={'text-white text-base'}
+                    onChangeText={handleOnChange}
+                    keyboardType="numeric"
+                />
+            </View>
+
+            <View className={'bg-[#2D2E31] p-5 rounded-lg w-80 max-w-md mb-5'}>
+                <Text className={'text-white font-bold text-2xl my-5'}>Plates</Text>
+                <Text className={'text-white text-xl m-10'}>
+                    {output}
+                </Text>
+            </View>
         </View>
     );
 }
