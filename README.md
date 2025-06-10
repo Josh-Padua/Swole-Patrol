@@ -67,7 +67,7 @@ Follow these steps to get a local copy of the project up and running on your mac
 
 1.  **Clone the repository:**
     ```bash
-    git clone [Your Repository URL]
+    git clone https://github.com/Josh-Padua/Swole-Patrol 
     cd SwolePatrol
     ```
 2.  **Install dependencies:**
