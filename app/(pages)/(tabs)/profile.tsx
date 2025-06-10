@@ -69,7 +69,6 @@ const Profile = () => {
                     </View>
 
                     <Link href="/(pages)/settings" className="font-lato-bold text-white mb-2">Settings</Link>
-                    <Link href="/(pages)/onboarding" className="font-lato-bold text-white mb-2">Onboarding</Link>
 
                     <TouchableOpacity onPress={signOut} className="bg-accent-orange py-3 px-6 rounded-lg items-center">
                         <Text className="text-white font-lato-bold">Logout</Text>

@@ -164,12 +164,6 @@ const Onboarding = () => {
                 >
                     <Text className="text-white font-lato-bold">Continue</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => router.push('/(pages)/(onboarding)/gymProgress')}
-                    className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-6"
-                >
-                    <Text className="text-white font-lato-bold">onboarding2</Text>
-                </TouchableOpacity>
             </View>
             </ScrollView>
         </SafeAreaView>
