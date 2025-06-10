@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { TabView, TabBar } from 'react-native-tab-view';
 import { useWindowDimensions } from 'react-native';
 import AddWorkout from '../(Workouts)/inputWorkouts';
 import ViewWorkouts from '../(Workouts)/viewWorkouts';
@@ -19,10 +19,16 @@ export default function Workouts() {
             <View className="flex-1">
                 <TabView
                     navigationState={{ index, routes }}
-                    renderScene={SceneMap({
-                        add: AddWorkout,
-                        view: ViewWorkouts,
-                    })}
+                    renderScene={({ route }) => {
+                        switch (route.key) {
+                            case 'add':
+                                return <AddWorkout />;
+                            case 'view':
+                                return <ViewWorkouts isActive={index === 1} />;
+                            default:
+                                return null;
+                        }
+                    }}
                     onIndexChange={setIndex}
                     initialLayout={{ width: layout.width }}
                     renderTabBar={ (props) => (<TabBar
