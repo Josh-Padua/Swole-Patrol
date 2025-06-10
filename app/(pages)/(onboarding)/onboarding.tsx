@@ -1,8 +1,8 @@
-import {View, Text, TextInput, TouchableOpacity, SafeAreaView, ScrollView} from 'react-native'
+import {View, Text, TextInput, TouchableOpacity, SafeAreaView, ScrollView, Alert} from 'react-native'
 import React, { useState } from 'react'
 import { router } from 'expo-router'
 import { auth, db } from '@/config/firebase'
-import { doc, updateDoc } from 'firebase/firestore'
+// import { doc, updateDoc } from 'firebase/firestore'
 import { Picker } from '@react-native-picker/picker'
 
 // jest
@@ -32,25 +32,25 @@ const Onboarding = () => {
             }
 
             if(!username.trim() || !height || !weight || !age || !gender) {
-                alert('Please fill in all fields.')
+                Alert.alert('Please fill in all fields.')
                 return
             }
 
             const ageNumber = parseInt(age)
             if (isNaN(ageNumber) || ageNumber <= 0 || ageNumber > 100) {
-                alert('Please enter a valid age between 1 and 100.')
+                Alert.alert('Please enter a valid age between 1 and 100.')
                 return
 
             }
             const heightNumber = parseFloat(height)
             const weightNumber = parseFloat(weight)
             if (isNaN(heightNumber) || isNaN(weightNumber)) {
-                alert('Height and weight must be valid numbers.')
+                Alert.alert('Height and weight must be valid numbers.')
                 return
             }
 
             if (username.length > 20) {
-                alert('Username must be 20 characters or less.');
+                Alert.alert('Username must be 20 characters or less.');
                 return;
             }
 
