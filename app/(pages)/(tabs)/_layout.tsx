@@ -1,4 +1,3 @@
-import {View, Text} from 'react-native'
 import React from 'react'
 import {Tabs} from "expo-router";
 
@@ -10,9 +9,7 @@ const TabsLayout = () => {
                 tabBarShowLabel: true,
                 tabBarStyle: {
                 backgroundColor: '#2D2E31',
-                    borderShown: false,
                     position: 'absolute',
-                    borderTop: 'none',
                 },
                 tabBarLabelStyle: {
                     color: '#FF5400',
@@ -47,14 +44,16 @@ const TabsLayout = () => {
                     headerShown: false,
                 }}
             />
+            
             <Tabs.Screen
-                name="stopwatch"
-                options={{
-                    title: 'Stopwatch',
-                    headerShown: false,
-                }}
-            />
+            name="leaderboard"
+            options={{
+                title: 'Leaderboard',
+                headerShown: false,
+            }}
+        />
             <Tabs.Screen
+
                 name="profile"
                 options={{
                     title: 'Profile',
