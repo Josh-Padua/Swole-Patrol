@@ -3,6 +3,8 @@ import { View, Text, FlatList, ActivityIndicator, SafeAreaView, TouchableOpacity
 import { collection, getDocs, query, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
+// No need for useSafeAreaInsets if filters aren't at the very bottom
+// import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface User {
     id: string;
@@ -14,15 +16,13 @@ interface User {
     createdAt?: string;
     email?: string;
     fitnessGoal?: string;
-    gymLevel?: string;
     height?: number;
     weight?: number;
-    workoutFrequency?: string;
     timeInGym?: number;
     exerciseMax?: number;
 }
 
-type FilterCategory = 'timeInGym' | 'age' | 'bmi' | 'height' | 'weight' | 'gymLevel' | 'workoutFrequency' | 'exerciseMax';
+type FilterCategory = 'timeInGym' | 'age' | 'bmi' | 'height' | 'weight' | 'exerciseMax';
 
 const STATIC_EXERCISES = [
     { id: 'sFtHfYh6UyXjd6Il8oma', name: 'Bench Press' },
@@ -34,12 +34,21 @@ const Leaderboard = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<FilterCategory>('timeInGym');
-    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+    const [sortOrders, setSortOrders] = useState<Record<FilterCategory, 'asc' | 'desc'>>({
+        timeInGym: 'desc',
+        age: 'desc',
+        bmi: 'desc',
+        height: 'desc',
+        weight: 'desc',
+        exerciseMax: 'desc',
+    });
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     const [availableExercises] = useState(STATIC_EXERCISES);
     const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(STATIC_EXERCISES[0]?.id || null);
     const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(STATIC_EXERCISES[0]?.name || null);
+
+    // Removed useSafeAreaInsets as it's not strictly necessary for filters at the top
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
@@ -60,10 +69,8 @@ const Leaderboard = () => {
                     createdAt: data.createdAt ?? undefined,
                     email: data.email ?? undefined,
                     fitnessGoal: data.fitnessGoal ?? undefined,
-                    gymLevel: data.gymLevel ?? undefined,
                     height: data.height ?? undefined,
                     weight: data.weight ?? undefined,
-                    workoutFrequency: data.workoutFrequency ?? undefined,
                     timeInGym: data.timeInGym ?? 0,
                     exerciseMax: undefined,
                 };
@@ -99,7 +106,7 @@ const Leaderboard = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeFilter, selectedExerciseId]); // Removed selectedExerciseName from dependency array as it's not directly used in the fetch logic
+    }, [activeFilter, selectedExerciseId]);
 
     useEffect(() => {
         fetchUsers();
@@ -111,6 +118,7 @@ const Leaderboard = () => {
     }, [fetchUsers]);
 
     const sortUsers = useCallback((usersToSort: User[]) => {
+        const currentSortOrder = sortOrders[activeFilter];
         return [...usersToSort].sort((a, b) => {
             let aValue: any;
             let bValue: any;
@@ -122,7 +130,7 @@ const Leaderboard = () => {
                 aValue = a[activeFilter];
                 bValue = b[activeFilter];
 
-                if (typeof aValue === 'number' || activeFilter === 'timeInGym' || activeFilter === 'age' || activeFilter === 'bmi' || activeFilter === 'height' || activeFilter === 'weight') {
+                if (typeof aValue === 'number') {
                     aValue = aValue ?? 0;
                     bValue = bValue ?? 0;
                 } else if (typeof aValue === 'string') {
@@ -132,28 +140,28 @@ const Leaderboard = () => {
             }
 
             if (typeof aValue === 'string' && typeof bValue === 'string') {
-                return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                return currentSortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
             } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-                return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+                return currentSortOrder === 'asc' ? aValue - bValue : bValue - aValue;
             }
 
             return 0;
         });
-    }, [activeFilter, sortOrder]);
+    }, [activeFilter, sortOrders, users]);
 
     const sortedUsers = sortUsers(users);
 
-    const handleFilterPress = (filter: FilterCategory) => {
+    const handleSortPress = (filter: FilterCategory) => {
         if (activeFilter === filter) {
-            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-        } else {
-            setActiveFilter(filter);
-            setSortOrder(
-                filter === 'timeInGym' || filter === 'age' || filter === 'bmi' || filter === 'height' || filter === 'weight' || filter === 'exerciseMax'
-                    ? 'desc'
-                    : 'asc'
-            );
+            setSortOrders(prev => ({
+                ...prev,
+                [filter]: prev[filter] === 'asc' ? 'desc' : 'asc'
+            }));
         }
+    };
+
+    const handleFilterPress = (filter: FilterCategory) => {
+        setActiveFilter(filter);
         if (filter === 'exerciseMax' && !selectedExerciseId && availableExercises.length > 0) {
             setSelectedExerciseId(availableExercises[0].id);
             setSelectedExerciseName(availableExercises[0].name);
@@ -164,14 +172,17 @@ const Leaderboard = () => {
         setActiveFilter('exerciseMax');
         setSelectedExerciseId(exerciseId);
         setSelectedExerciseName(exerciseName);
-        setSortOrder('desc');
+        setSortOrders(prev => ({
+            ...prev,
+            exerciseMax: 'desc'
+        }));
     };
 
     const getColumnHeader = (filter: FilterCategory) => {
         let header = '';
         switch (filter) {
             case 'timeInGym':
-                header = 'Time in Gym'; // Shortened for display
+                header = 'Time in Gym';
                 break;
             case 'age':
                 header = 'Age';
@@ -185,22 +196,30 @@ const Leaderboard = () => {
             case 'weight':
                 header = 'Weight (kg)';
                 break;
-            case 'gymLevel':
-                header = 'Gym Level';
-                break;
-            case 'workoutFrequency':
-                header = 'Workout Freq.';
-                break;
             case 'exerciseMax':
                 header = `${selectedExerciseName || 'Exercise'} Max (kg)`;
                 break;
             default:
                 header = 'Stat';
         }
+
+        const currentSortOrder = sortOrders[filter];
+        const isCurrentActiveFilter = activeFilter === filter;
+
         return (
-            <Text className="font-lato-bold text-gray-300 w-4/12 text-center">
-                {header} {activeFilter === filter ? (sortOrder === 'asc' ? '▲' : '▼') : ''}
-            </Text>
+            <TouchableOpacity
+                onPress={() => handleSortPress(filter)}
+                className="w-4/12 flex-row justify-center items-center"
+            >
+                <Text className="font-lato-bold text-gray-300 text-center">
+                    {header}
+                </Text>
+                {isCurrentActiveFilter && (
+                    <Text className="font-lato-bold text-gray-300 ml-1">
+                        {currentSortOrder === 'asc' ? '▲' : '▼'}
+                    </Text>
+                )}
+            </TouchableOpacity>
         );
     };
 
@@ -230,19 +249,19 @@ const Leaderboard = () => {
                 <Text className="font-lato-bold text-accent-orange text-center text-2xl">🏆 Leaderboard</Text>
             </View>
 
-            {/* Filter Buttons Section */}
+            {/* Filter Buttons Section - Back at the top */}
             <View style={styles.filtersSection}>
+                {/* Main Filter Buttons */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollViewContent}>
                     <FilterButton title="Time in Gym" isActive={activeFilter === 'timeInGym'} onPress={() => handleFilterPress('timeInGym')} />
                     <FilterButton title="Age" isActive={activeFilter === 'age'} onPress={() => handleFilterPress('age')} />
                     <FilterButton title="BMI" isActive={activeFilter === 'bmi'} onPress={() => handleFilterPress('bmi')} />
                     <FilterButton title="Height" isActive={activeFilter === 'height'} onPress={() => handleFilterPress('height')} />
                     <FilterButton title="Weight" isActive={activeFilter === 'weight'} onPress={() => handleFilterPress('weight')} />
-                    <FilterButton title="Gym Level" isActive={activeFilter === 'gymLevel'} onPress={() => handleFilterPress('gymLevel')} />
-                    <FilterButton title="Workout Freq." isActive={activeFilter === 'workoutFrequency'} onPress={() => handleFilterPress('workoutFrequency')} />
                     <FilterButton title="Exercise Max" isActive={activeFilter === 'exerciseMax'} onPress={() => handleFilterPress('exerciseMax')} />
                 </ScrollView>
 
+                {/* Exercise Selection Buttons (conditionally rendered when 'exerciseMax' filter is active) */}
                 {activeFilter === 'exerciseMax' && availableExercises.length > 0 && (
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.exerciseFilterScrollViewContent}>
                         {availableExercises.map((exercise) => (
@@ -257,7 +276,7 @@ const Leaderboard = () => {
                 )}
             </View>
 
-            {/* Added a subtle text or divider here to fill the space */}
+            {/* Leaderboard Info and Table Headers */}
             <View style={styles.leaderboardInfoContainer}>
                 <Text className="font-lato-regular text-gray-400 text-center text-sm">
                     {activeFilter === 'exerciseMax' ? `Leaderboard for ${selectedExerciseName || 'Exercise'} Max` : `Leaderboard sorted by ${activeFilter}`}
@@ -270,6 +289,7 @@ const Leaderboard = () => {
                 {getColumnHeader(activeFilter)}
             </View>
 
+            {/* FlatList should take up the remaining space */}
             <FlatList
                 data={sortedUsers}
                 keyExtractor={(item) => item.id}
@@ -299,7 +319,6 @@ const Leaderboard = () => {
                         </View>
                     );
                 }}
-                // Added empty list component for better UX when no data
                 ListEmptyComponent={() => (
                     <View className="flex-1 justify-center items-center mt-8">
                         <Text className="text-gray-500 font-lato-regular text-lg">No users found for this filter.</Text>
@@ -326,28 +345,36 @@ const FilterButton: React.FC<FilterButtonProps> = ({ title, isActive, onPress })
 );
 
 const styles = StyleSheet.create({
-    headerContainer: {
-        paddingVertical: 16, // Reduced padding from mb-6
-        paddingHorizontal: 16, // Keep horizontal padding consistent
+    safeArea: {
+        flex: 1, // Make SafeAreaView fill the entire screen
+        backgroundColor: '#1E1E1E', // Match your primary-background color
+        // No explicit padding here, SafeAreaView handles top/bottom automatically
     },
+    headerContainer: {
+        paddingVertical: 16,
+        paddingHorizontal: 16,
+    },
+    // Filter buttons section style (now at the top)
     filtersSection: {
-        marginBottom: 8, // Reduced margin
+        marginBottom: 8, // Keeps a small gap below the filters
+        // No absolute positioning or special flex rules needed here,
+        // it just follows the normal document flow at the top.
     },
     filterScrollViewContent: {
-        paddingHorizontal: 16, // Add horizontal padding to the scroll view content
+        paddingHorizontal: 16,
         paddingBottom: 4, // Small padding below the first row of buttons
-        justifyContent: 'center', // Center buttons horizontally
+        justifyContent: 'center',
     },
     exerciseFilterScrollViewContent: {
-        paddingHorizontal: 16, // Add horizontal padding to the scroll view content
+        paddingHorizontal: 16,
         paddingTop: 4, // Small padding above the second row of buttons
         paddingBottom: 8, // Small padding below the second row of buttons
-        justifyContent: 'center', // Center buttons horizontally
+        justifyContent: 'center',
     },
     leaderboardInfoContainer: {
-        paddingVertical: 8, // Added padding to this new info text
+        paddingVertical: 8,
         paddingHorizontal: 16,
-        marginBottom: 8, // Spacing before the table headers
+        marginBottom: 8,
     }
 });
 
