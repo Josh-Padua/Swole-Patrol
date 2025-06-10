@@ -11,13 +11,6 @@ const Checkout = () => {
 
     const initializePaymentSheet = async () => {
 
-        const { paymentIntent, customer } = await fetchAPI("/api/(stripe)/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-
         const { error } = await initPaymentSheet({
             merchantDisplayName: "Swole Patrol",
 
