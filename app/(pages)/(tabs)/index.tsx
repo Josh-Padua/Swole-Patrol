@@ -8,13 +8,14 @@ import {
     View
 } from "react-native";
 import {BarChart, LineChart} from "react-native-chart-kit";
-import React, {useState, useCallback} from "react";
-import {addDoc, collection, getDocs, query, where} from "firebase/firestore";
+import React, {useEffect, useState, useCallback} from "react";
+import {addDoc, collection, getDocs, onSnapshot, orderBy, query, where} from "firebase/firestore";
 import {db} from "@/config/firebase";
 import {getAuth} from "firebase/auth";
-import {getMacros} from "@/api/user-macros";
+import {getMacros, setMacros} from "@/api/user-macros";
 import {router} from "expo-router";
 import {useFocusEffect} from '@react-navigation/native';
+import {DocumentData} from "@firebase/firestore";
 
 type weightEntry = {
     date: Date;
@@ -128,8 +129,8 @@ export default function Index() {
     )
 
     return (
-        <SafeAreaView className="items-center bg-primary-background h-full pb-10 max-w-screen">
-            <ScrollView className="pb-5" showsVerticalScrollIndicator={false}>
+        <SafeAreaView className="items-center bg-primary-background h-full max-w-screen">
+            <ScrollView className="pb-20" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 65}}>
                 <View className="flex-1 items-center">
                     <Text className="text-3xl font-bold text-white font-lato-bold mb-5">Home</Text>
                     <View className="w-full px-4 bg-primary rounded-lg items-center">
@@ -140,10 +141,11 @@ export default function Index() {
                                 datasets: [
                                     {
                                         data: [validateChartData(kCal), validateChartData(protein), validateChartData(carbs), validateChartData(fats)], // Uses API to take data from Firebase to display
+
                                     },
                                 ],
                             }}
-                            width={screenWidth - 100}
+                            width={screenWidth - 40}
                             height={300}
                             fromZero
                             chartConfig={{
@@ -169,6 +171,7 @@ export default function Index() {
                             height={300}
                             yAxisSuffix=" kg"
                             fromZero
+                            hidePointsAtIndex={[...Array(entries.length).keys()]}
                             chartConfig={{
                                 backgroundColor: '#2D2E31',
                                 backgroundGradientFrom: '#2D2E31',
