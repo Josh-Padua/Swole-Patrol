@@ -23,7 +23,7 @@ function getSetID(item:string):string {
     return item[0].toLowerCase(); // Sorted by first letter
 }
 
-function sanitiseString(str: string): string {
+export function sanitiseString(str: string): string {
     return str.toLowerCase()          // Lower case, for comparison
         .replace(/[^\w]/g, ""); // Remove symbols
 }

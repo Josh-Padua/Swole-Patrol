@@ -7,7 +7,7 @@ import {User} from "firebase/auth";
 const COLLECTION: string = "user-macro-goals";
 
 
-function getUserID():string|undefined {
+export function getUserID():string|undefined {
     const currentUser: User | null = auth.currentUser;
     if (currentUser)
         return currentUser.uid;

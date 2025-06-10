@@ -1,4 +1,3 @@
-import {View, Text} from 'react-native'
 import React from 'react'
 import {Tabs} from "expo-router";
 
@@ -10,9 +9,7 @@ const TabsLayout = () => {
                 tabBarShowLabel: true,
                 tabBarStyle: {
                 backgroundColor: '#2D2E31',
-                    borderShown: false,
                     position: 'absolute',
-                    borderTop: 'none',
                 },
                 tabBarLabelStyle: {
                     color: '#FF5400',
