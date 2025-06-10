@@ -9,7 +9,7 @@ import {
     Modal,
     Pressable,
     Button,
-    TextInput
+    TextInput, Alert
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import {collection, doc, documentId, FieldPath, getDoc, getDocs, query, setDoc, where} from "firebase/firestore";
@@ -20,6 +20,7 @@ import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Picker} from '@react-native-picker/picker';
 import {set} from "@firebase/database";
+import {AntDesign} from "@expo/vector-icons";
 
 const dummyProgressData = [
     {date: '2024-05-01', weight: 60},
@@ -61,6 +62,7 @@ const ViewWorkouts = () => {
     const {userData} = useAuth();
     const GALLERY_KEY = 'progress_gallery';
     const scopeFilter = [{key: 1, label: "3 Months", value: 28*3}, {key: 2, label: "6 Months", value: 28*6}, {key: 3, label: "1 Year", value: 28*12}];
+    const [exercises, setExercises] = useState<any[]>([]);
 
     const formatDateYYYYMMDD = (date: Date) => {
         const year = date.getFullYear();
@@ -126,7 +128,7 @@ const ViewWorkouts = () => {
         // chartData.sort((a, b) => a.date.localeCompare(b.date));
 
         for (const entry of atMax1RM) {
-            const maxRef = doc(db, 'users', userData.userId, 'exerciseMaxes', entry.exerciseId);
+            const maxRef = doc(db, 'users', userData.userId, 'exerciseMaxes', entry.exerciseId, 'timePeriods', days.toString());
             const maxSnap = await getDoc(maxRef);
 
             let dbMax = 0;
@@ -174,10 +176,30 @@ const ViewWorkouts = () => {
 
         const newGallery = [
             ...gallery,
-            { uri: newPath, date: new Date().toISOString() },
+            { uri: newPath, date: formatDateYYYYMMDD(new Date()) },
         ];
         setGallery(newGallery);
         saveGallery(newGallery);
+    };
+
+    const handleDeletePic = (idx: number) => {
+        Alert.alert(
+            'Delete Photo',
+            'Are you sure you want to delete this photo?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => {
+                        const newGallery = gallery.filter((_, i) => i !== idx);
+                        setGallery(newGallery);
+                        saveGallery(newGallery);
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
     };
 
     const handleAchieveGoal = () => {
@@ -210,44 +232,28 @@ const ViewWorkouts = () => {
                 <Text className="text-3xl text-white font-extrabold mt-1">{dummyStreak} days</Text>
                 <Text className="text-white text-xs mt-1">Keep it up!</Text>
             </View>
-            <View className="flex-row justify-between items-center mb-6">
-                <Text className="text-white text-xl font-bold mb-4">Progress Chart</Text>
-                {/*<TextInput*/}
-                {/*    placeholder="Timeframe (days)"*/}
-                {/*    className="bg-zinc-800 text-white rounded-lg px-3 py-2 w-fit"*/}
-                {/*    keyboardType="numeric"*/}
-                {/*    value={String(days)}*/}
-                {/*    onChangeText={(text) => {*/}
-                {/*        if (text === '') {*/}
-                {/*            setDays('');*/}
-                {/*        } else {*/}
-                {/*            const num = parseInt(text);*/}
-                {/*            if (!isNaN(num) && num > 0) {*/}
-                {/*                setDays(num);*/}
-                {/*                getChartData(num, "sFtHfYh6UyXjd6Il8oma");*/}
-                {/*            }*/}
-                {/*        }*/}
-                {/*    }}*/}
-                {/*/>*/}
-                <View style={{ flex: 1, height: 50, backgroundColor: '#374151', borderRadius: 8, overflow: 'hidden' }}>
+            <View className="flex-row justify-between items-center mb-0">
+                <Text className="text-white text-xl font-bold">Progress Chart</Text>
+                <View style={{ width: 120, height: 40, backgroundColor: '#374151', borderRadius: 8, overflow: 'hidden', marginLeft: 12 }}>
                     <Picker
                         selectedValue={days}
-                        style={{ flex: 1, color: 'white', height: 50 }}
-                        onValueChange={ (value) =>{
-                            setDays(value)
-                            getChartData(value, "sFtHfYh6UyXjd6Il8oma");
-
+                        style={{ width: 200, color: 'white', height: 50, fontSize: 14, top: -8 }}
+                        onValueChange={value => {
+                            setDays(value);
+                            getChartData(value as number, "sFtHfYh6UyXjd6Il8oma");
                         }}
-                        itemStyle={{ height: 50, fontSize: 16 }}
+                        itemStyle={{ height: 36, fontSize: 14 }}
                     >
                         <Picker.Item label="28 Days" value={28} />
-                        {
-                            scopeFilter.map(filter => (
+                        {scopeFilter.map(filter => (
                             <Picker.Item key={filter.key} label={filter.label} value={filter.value} />
                         ))}
                     </Picker>
                 </View>
             </View>
+            <Pressable className="flex-1 bg-gray-700 rounded-lg p-2 mb-2 w-1/3" >
+                <Text className="text-blue-400 font-bold text-l">TEST</Text>
+            </Pressable>
             <View className="bg-zinc-800 rounded-xl p-4 mb-6">
                 <LineChart
                     data={testChartData}
@@ -256,22 +262,34 @@ const ViewWorkouts = () => {
                     chartConfig={{
                         backgroundGradientFrom: '#18181b',
                         backgroundGradientTo: '#18181b',
-                        color: () => '#FF5400', // Line color
+                        color: () => '#FF5400',
                         labelColor: () => '#fff',
-                        propsForDots: { r: '5', strokeWidth: '2', stroke: '#FF5400' }, // Dot color
+                        propsForDots: { r: '5', strokeWidth: '2', stroke: '#FF5400' },
                         propsForBackgroundLines: { stroke: '#334155' },
                     }}
                     style={{ borderRadius: 12 }}
                 />
             </View>
-
-            <Text className="text-white text-xl font-bold mb-4">Progress Gallery</Text>
+            <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-white text-xl font-bold mb-4">Progress Gallery</Text>
+                <Pressable>
+                    <Text className="text-blue-400 font-bold text-l mb-4 mr-4" >View</Text>
+                </Pressable>
+            </View>
             <ScrollView horizontal className="flex-row mb-6">
                 {gallery.map((pic, idx) => (
-                    <TouchableOpacity key={idx} className="items-center mr-4" onPress={() => openModal(pic)}>
-                        <Image source={{ uri: pic.uri }} className="w-20 h-32 rounded-lg bg-zinc-700" />
+                    <View key={idx} className="items-center mr-4">
+                        <View>
+                            <Image source={{ uri: pic.uri }} className="w-20 h-32 rounded-lg bg-zinc-700" />
+                            <Pressable
+                                className="absolute top-0 right-0 p-2 z-0"
+                                onPress={() => handleDeletePic(idx)}
+                            >
+                                <AntDesign name="delete" size={12} color="red" />
+                            </Pressable>
+                        </View>
                         <Text className="text-xs text-white mt-1">{pic.date}</Text>
-                    </TouchableOpacity>
+                    </View>
                 ))}
                 <TouchableOpacity
                     className="w-20 h-32 rounded-lg bg-accent-orange items-center justify-center"
@@ -284,11 +302,15 @@ const ViewWorkouts = () => {
 
             {/* Modal for in-depth gallery view */}
             <Modal visible={modalVisible} transparent animationType="fade">
-                <View className="flex-1 bg-black/80 justify-center items-center">
-                    <View className="bg-zinc-900 rounded-xl p-4 items-center">
+                <View className="flex-1 bg-black/80 justify-center items-center p-2">
+                    <View className="bg-zinc-900 rounded-xl p-3 items-center w-full h-full max-w-full max-h-full">
                         {selectedPic && (
                             <>
-                                <Image source={{ uri: selectedPic.uri }} className="w-48 h-72 rounded-lg mb-4" />
+                                <Image
+                                    source={{ uri: selectedPic.uri }}
+                                    className="w-full h-5/6 rounded-xl mb-3"
+                                    resizeMode="contain"
+                                />
                                 <Text className="text-white text-base mb-2">{selectedPic.date}</Text>
                                 <Pressable
                                     className="bg-accent-orange px-4 py-2 rounded-lg"
