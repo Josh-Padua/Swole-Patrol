@@ -3,6 +3,7 @@ import "../global.css"
 import { useFonts} from "expo-font";
 import {useEffect} from "react";
 import { AuthProvider } from "@/context/AuthProvider";
+// import {StripeProvider} from "@stripe/stripe-react-native";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -23,7 +24,11 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
+      {/*<StripeProvider*/}
+      {/*    publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}*/}
+      {/*>*/}
       <Stack screenOptions={{ headerShown: false }}/>
+      {/*</StripeProvider>*/}
     </AuthProvider>
   );
 }

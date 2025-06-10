@@ -95,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 userId: response.user.uid,
                 basicOnboarding: false,
                 gymOnboarding: false,
+                premiumMember: false,
             });
 
             console.log(response);

@@ -1,16 +1,81 @@
-import {View, Text, SafeAreaView} from 'react-native'
+import {View, Text, SafeAreaView, FlatList, TouchableOpacity, Alert} from 'react-native'
 import React from 'react'
 import {StripeProvider} from "@stripe/stripe-react-native";
 import Checkout from "@/components/checkout";
+import {auth, db} from "@/config/firebase";
+import {doc, getDoc, updateDoc} from "firebase/firestore";
+import {router} from "expo-router";
 
 const Premium = () => {
+
+    const benefits = [
+        { id: '1', title: 'Personalized Workout Plans'},
+        { id: '2', title: 'Advanced Progress Tracking'},
+        { id: '3', title: 'Exclusive Workout library + meal database'},
+        { id: '4', title: 'Investing in what matters. You.'}
+    ]
+
+    const upgradeToPremium = async () => {
+        try {
+            const userId = auth.currentUser?.uid
+            if (!userId) {
+                console.error('No user ID found')
+                return
+            }
+
+            const userDocRef = doc(db, 'users', userId)
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists() && userDocSnap.data().premiumMember) {
+                Alert.alert('Already have Premium', 'You are already a premium member.');
+                router.push('/(pages)/(tabs)/profile')
+                return;
+            }
+
+            await updateDoc(userDocRef, {
+                premiumMember: true,
+                updatedAt: new Date().toISOString()
+            })
+
+            Alert.alert('Upgrade Success!', 'We look forward to seeing you reach your goals with premium!');
+            router.push('/(pages)/(tabs)/profile')
+        } catch (error) {
+            console.error('Error saving user data:', error)
+        }
+    }
+
     return (
         <StripeProvider
             publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}
         >
-            <SafeAreaView className="flex-1 items-center justify-center bg-primary-background">
-                <Text className="text-white text-xl mb-4">Premium Subscription</Text>
-                <Checkout />
+            <SafeAreaView className="flex-1 bg-primary-background justify-center">
+                <View className="flex-1 px-4 pt-8 mt-20">
+                <Text className="font-lato-bold text-4xl text-white text-center mb-2">Unlock your Full Potential.</Text>
+                <Text className="font-lato text-white text-center mb-6">Take your fitness journey to another level with premium</Text>
+                <Text className="font-lato-semibold text-2xl text-white mb-4 text-center">Why upgrade?</Text>
+                <FlatList
+                    data={benefits}
+                    keyExtractor={(item) => item.id}
+                    className="mb-6"
+                    renderItem={({item}) => (
+                        <View className="flex-row items-center mb-3 px-2">
+                            <Text className="text-accent-orange text-lg mr-2">•</Text>
+                            <Text className="text-white font-lato text-base flex-1">
+                                {item.title}
+                            </Text>
+                        </View>
+                    )}
+                />
+                    <View className="mb-5">
+                        <TouchableOpacity
+                            onPress={upgradeToPremium}
+                            className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-6"
+                        >
+                            <Text className="text-white font-lato-bold">Upgrade to Premium</Text>
+                        </TouchableOpacity>
+                        <Checkout/>
+                    </View>
+                </View>
             </SafeAreaView>
         </StripeProvider>
     )
