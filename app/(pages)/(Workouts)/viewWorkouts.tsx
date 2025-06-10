@@ -441,9 +441,6 @@ const ViewWorkouts = () => {
             </View>
             <View className="flex-row justify-between items-center mb-6">
                 <Text className="text-white text-xl font-bold mb-4">Progress Gallery</Text>
-                <Pressable>
-                    <Text className="text-blue-400 font-bold text-l mb-4 mr-4">View</Text>
-                </Pressable>
             </View>
             <ScrollView horizontal className="flex-row mb-6">
                 {gallery.map((pic, idx) => (
