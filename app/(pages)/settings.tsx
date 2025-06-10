@@ -46,7 +46,7 @@ const Settings = () => {
 
     return (
         <SafeAreaView className="bg-primary-background h-full">
-            <ScrollView className="flex-col" contentContainerStyle={{ alignItems: 'center'}}>
+            <ScrollView className="flex-col" contentContainerStyle={{alignItems: 'center', paddingTop: 50}}>
                 <Text className="text-center text-accent-orange font-lato-bold text-2xl mb-1.5">Update Details</Text>
                 <View className="flex-row items-center gap-4">
                     {/*Text fields to enter what User wants to update*/}
@@ -71,7 +71,6 @@ const Settings = () => {
                                   className="bg-accent-orange py-2 px-6 rounded-lg items-center mb-2 mt-1">
                     <Text className="text-white font-lato-bold">Update Details</Text>
                 </TouchableOpacity>
-
 
                 {/*Return back to Profile page*/}
                 <TouchableOpacity onPress={() => router.back()}
