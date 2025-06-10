@@ -63,10 +63,6 @@ const Profile = () => {
                                 </View>
                             </View>
 
-                            <TouchableOpacity onPress={() => router.push("/(pages)/premium")} className="bg-accent-orange py-3 px-6 rounded-lg items-center mt-4">
-                                <Text className="text-white font-lato-bold">Upgrade to Premium</Text>
-                            </TouchableOpacity>
-
                             <View className="bg-primary rounded-lg p-6 mt-4 mb-4 w-full items-center max-w-64">
                                 <Text className="font-lato-semibold text-xl text-white mb-4">Statistics</Text>
                                 <View className="self-start">
