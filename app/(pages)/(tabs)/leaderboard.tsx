@@ -75,7 +75,6 @@ const Leaderboard = () => {
             const aValue = a[activeFilter];
             const bValue = b[activeFilter];
 
-            // Handle cases where values might be undefined or different types
             if (aValue === undefined && bValue === undefined) return 0;
             if (aValue === undefined) return sortOrder === 'asc' ? 1 : -1;
             if (bValue === undefined) return sortOrder === 'asc' ? -1 : 1;
@@ -83,11 +82,8 @@ const Leaderboard = () => {
             if (typeof aValue === 'string' && typeof bValue === 'string') {
                 return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
             } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-                // For 'timeInGym' and other numerical stats, sort in descending order by default
-                // This logic is simplified as `sortOrder` already handles asc/desc
                 return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
             }
-            // Fallback for other types or mixed types - might need more specific handling
             return 0;
         });
     }, [activeFilter, sortOrder]);
@@ -99,8 +95,6 @@ const Leaderboard = () => {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); // Toggle sort order if same filter is pressed
         } else {
             setActiveFilter(filter);
-            // Default sort order for numerical values like time/age/bmi/height/weight should often be descending (higher is better)
-            // For string values like gymLevel/workoutFrequency, ascending is usually fine.
             setSortOrder(filter === 'timeInGym' || filter === 'age' || filter === 'bmi' || filter === 'height' || filter === 'weight' ? 'desc' : 'asc');
         }
     };
@@ -222,17 +216,26 @@ interface FilterButtonProps {
     isActive: boolean;
     onPress: () => void;
 }
-
 const FilterButton: React.FC<FilterButtonProps> = ({ title, isActive, onPress }) => (
     <TouchableOpacity
         onPress={onPress}
-        className={`px-4 py-2 rounded-full mx-1 ${isActive ? 'bg-accent-orange' : 'bg-gray-700'}`}
+        className={`mx-1 rounded-full ${isActive ? 'bg-accent-orange' : 'bg-gray-700'}`}
+        style={{
+            paddingVertical: 10,
+            paddingHorizontal: 14,
+            minWidth: 100,
+            minHeight: 30,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRadius: 9999,
+        }}
     >
-        <Text className={`font-lato-regular ${isActive ? 'text-white' : 'text-gray-300'}`}>
+        <Text
+            className={`font-lato-regular text-center ${isActive ? 'text-white' : 'text-gray-300'}`}
+            style={{ fontSize: 10, lineHeight: 15 }}
+        >
             {title}
         </Text>
     </TouchableOpacity>
 );
-
-
 export default Leaderboard;

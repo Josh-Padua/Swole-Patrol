@@ -55,6 +55,13 @@ const TabsLayout = () => {
                 }}
             />
             <Tabs.Screen
+            name="leaderboard"
+            options={{
+                title: 'Leaderboard',
+                headerShown: false,
+            }}
+        />
+            <Tabs.Screen
                 name="profile"
                 options={{
                     title: 'Profile',
