@@ -44,14 +44,20 @@ const TabsLayout = () => {
                     headerShown: false,
                 }}
             />
-            
             <Tabs.Screen
-            name="leaderboard"
-            options={{
-                title: 'Leaderboard',
-                headerShown: false,
-            }}
-        />
+                name="calculator"
+                options={{
+                    title: 'Calculator',
+                    headerShown: false,
+                }}
+            />
+            <Tabs.Screen
+                name="leaderboard"
+                options={{
+                    title: 'Leaderboard',
+                    headerShown: false,
+                }}
+            />
             <Tabs.Screen
 
                 name="profile"
