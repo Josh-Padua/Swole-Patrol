@@ -44,13 +44,7 @@ const TabsLayout = () => {
                     headerShown: false,
                 }}
             />
-            <Tabs.Screen
-                name="stopwatch"
-                options={{
-                    title: 'Stopwatch',
-                    headerShown: false,
-                }}
-            />
+            
             <Tabs.Screen
             name="leaderboard"
             options={{
@@ -59,6 +53,7 @@ const TabsLayout = () => {
             }}
         />
             <Tabs.Screen
+
                 name="profile"
                 options={{
                     title: 'Profile',
