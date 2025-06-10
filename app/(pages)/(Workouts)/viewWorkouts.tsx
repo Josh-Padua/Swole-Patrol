@@ -9,17 +9,20 @@ import {
     Modal,
     Pressable,
     Button,
-    TextInput, Alert
+    TextInput,
+    Alert,
+    FlatList,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
-import {collection, doc, documentId, FieldPath, getDoc, getDocs, query, setDoc, where} from "firebase/firestore";
+import {LineChart} from 'react-native-chart-kit';
+import {collection, doc, documentId, getDoc, getDocs, query, setDoc, where} from "firebase/firestore";
 import {db} from "@/config/firebase";
 import {useAuth} from "@/context/AuthProvider";
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Picker} from '@react-native-picker/picker';
-import {set} from "@firebase/database";
 import {AntDesign} from "@expo/vector-icons";
 
 const dummyProgressData = [
@@ -36,7 +39,6 @@ const dummyGoal = {
     goal: 120,
     achieved: false,
 };
-// Dummy streak (replace with DB logic)
 const dummyStreak = 7;
 
 const chartData = {
@@ -56,13 +58,21 @@ const ViewWorkouts = () => {
     const [gallery, setGallery] = useState(dummyGallery);
     const [goal, setGoal] = useState(dummyGoal);
     const [modalVisible, setModalVisible] = useState(false);
+    const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
     const [selectedPic, setSelectedPic] = useState<{ uri: string; date: string } | null>(null);
     const [testChartData, setTestChartData] = useState(chartData);
-    const [days, setDays] = useState<string | number>(30);
+    const [days, setDays] = useState<string | number>(28);
     const {userData} = useAuth();
     const GALLERY_KEY = 'progress_gallery';
-    const scopeFilter = [{key: 1, label: "3 Months", value: 28*3}, {key: 2, label: "6 Months", value: 28*6}, {key: 3, label: "1 Year", value: 28*12}];
-    const [exercises, setExercises] = useState<any[]>([]);
+    const scopeFilter = [{key: 1, label: "3 Months", value: 28 * 3}, {
+        key: 2,
+        label: "6 Months",
+        value: 28 * 6
+    }, {key: 3, label: "1 Year", value: 28 * 12}];
+    const [exercises, setExercises] = useState<{ id: string, name: string }[]>([]);
+    const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number>(0);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredExercises, setFilteredExercises] = useState<{ id: string, name: string }[]>([]);
 
     const formatDateYYYYMMDD = (date: Date) => {
         const year = date.getFullYear();
@@ -82,6 +92,7 @@ const ViewWorkouts = () => {
 
     const getChartData = async (days: number, exerciseId: string) => {
         const chartData: { date: String; weight: number; }[] = []
+        const uniqueExercises = new Map<string, string>();
         const date = formatDateYYYYMMDD(new Date())
         const toDate = new Date().setDate(new Date().getDate() - days)
         const toDateFormatted = formatDateYYYYMMDD(new Date(toDate))
@@ -104,6 +115,9 @@ const ViewWorkouts = () => {
             let max1RM = 0;
             if (Array.isArray(doc.exercises)) {
                 doc.exercises.forEach((exercise: any) => {
+                    if (exercise.id && exercise.name && !uniqueExercises.has(exercise.id)) {
+                        uniqueExercises.set(exercise.id, exercise.name);
+                    }
                     exercise.sets.forEach((set: any) => {
                         if (exercise.id === exerciseId && set.Estimated1RM && set.Estimated1RM > max1RM) {
                             max1RM = set.Estimated1RM;
@@ -124,8 +138,12 @@ const ViewWorkouts = () => {
                 chartData.push(entry);
             }
         });
-        // Sort by date to ensure proper chart ordering
-        // chartData.sort((a, b) => a.date.localeCompare(b.date));
+        const exercisesArray = Array.from(uniqueExercises.entries()).map(([id, name]) => ({
+            id,
+            name
+        }));
+        setExercises(exercisesArray);
+        setFilteredExercises(exercisesArray);
 
         for (const entry of atMax1RM) {
             const maxRef = doc(db, 'users', userData.userId, 'exerciseMaxes', entry.exerciseId, 'timePeriods', days.toString());
@@ -137,14 +155,12 @@ const ViewWorkouts = () => {
             }
 
             if (entry.max1RM > dbMax) {
-                // Update Firestore with the new max1RM
                 await setDoc(maxRef, {estimatedMax1RM: entry.max1RM}, {merge: true});
             }
 
             if (chartData.length > 0) {
                 const newChartData = {
                     labels: chartData.map(d => {
-                        // Format date for display (MM-DD)
                         const dateObj = new Date(d.date.toString());
                         return `${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
                     }),
@@ -162,7 +178,7 @@ const ViewWorkouts = () => {
     }
 
     const handleUploadPicture = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
+        const result = await ImagePicker.launchImageLibraryAsync({mediaTypes: ImagePicker.MediaTypeOptions.Images});
         if (result.canceled) return;
 
         const uri = result.assets[0].uri;
@@ -172,11 +188,11 @@ const ViewWorkouts = () => {
         }
         const newPath = FileSystem.documentDirectory + fileName;
 
-        await FileSystem.copyAsync({ from: uri, to: newPath });
+        await FileSystem.copyAsync({from: uri, to: newPath});
 
         const newGallery = [
             ...gallery,
-            { uri: newPath, date: formatDateYYYYMMDD(new Date()) },
+            {uri: newPath, date: formatDateYYYYMMDD(new Date())},
         ];
         setGallery(newGallery);
         saveGallery(newGallery);
@@ -187,7 +203,7 @@ const ViewWorkouts = () => {
             'Delete Photo',
             'Are you sure you want to delete this photo?',
             [
-                { text: 'Cancel', style: 'cancel' },
+                {text: 'Cancel', style: 'cancel'},
                 {
                     text: 'Delete',
                     style: 'destructive',
@@ -198,12 +214,11 @@ const ViewWorkouts = () => {
                     },
                 },
             ],
-            { cancelable: true }
+            {cancelable: true}
         );
     };
 
     const handleAchieveGoal = () => {
-        // TODO: Integrate with DB and logic for new max
         setGoal({
             currentMax: goal.goal,
             goal: goal.goal + 10,
@@ -216,6 +231,35 @@ const ViewWorkouts = () => {
         setModalVisible(true);
     };
 
+    const handleExerciseSelect = (exerciseIndex: number) => {
+        setSelectedExerciseIndex(exerciseIndex);
+        setExerciseModalVisible(false);
+        setSearchQuery('');
+        const daysNum = typeof days === 'string' ? parseInt(days) : days;
+        const selectedExercise = exercises[exerciseIndex];
+        if (selectedExercise) {
+            getChartData(daysNum, selectedExercise.id);
+        }
+    };
+
+    const openExerciseModal = () => {
+        setExerciseModalVisible(true);
+        setSearchQuery('');
+        setFilteredExercises(exercises);
+    };
+
+    const handleSearch = (text: string) => {
+        setSearchQuery(text);
+        if (text.trim() === '') {
+            setFilteredExercises(exercises);
+        } else {
+            const filtered = exercises.filter(exercise =>
+                exercise.name.toLowerCase().includes(text.toLowerCase())
+            );
+            setFilteredExercises(filtered);
+        }
+    };
+
     useEffect(() => {
         const daysNum = typeof days === 'string' ? parseInt(days) : days;
         if (!isNaN(daysNum) && daysNum > 0) {
@@ -226,7 +270,6 @@ const ViewWorkouts = () => {
 
     return (
         <ScrollView className="flex-1 bg-zinc-900 px-4 py-4">
-            {/* Workout Streak Feature */}
             <View className="bg-accent-orange rounded-xl p-4 mb-6 items-center">
                 <Text className="text-white text-lg font-bold">Workout Streak</Text>
                 <Text className="text-3xl text-white font-extrabold mt-1">{dummyStreak} days</Text>
@@ -234,26 +277,59 @@ const ViewWorkouts = () => {
             </View>
             <View className="flex-row justify-between items-center mb-0">
                 <Text className="text-white text-xl font-bold">Progress Chart</Text>
-                <View style={{ width: 120, height: 40, backgroundColor: '#374151', borderRadius: 8, overflow: 'hidden', marginLeft: 12 }}>
+                <View style={{
+                    width: 100,
+                    height: 40,
+                    backgroundColor: '#374151',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    marginLeft: 12,
+                    top: -8
+                }}>
                     <Picker
                         selectedValue={days}
-                        style={{ width: 200, color: 'white', height: 50, fontSize: 14, top: -8 }}
+                        style={Platform.OS === 'ios' ? ({
+                            width: 110,
+                            color: 'white',
+                            height: 50,
+                            width: 120,
+                            top: 2,
+                            left: -10
+                        }) : ({
+                            width: 140,
+                            color: 'white',
+                            height: 50,
+                            top: -8,
+                            left: 2
+                        })}
                         onValueChange={value => {
                             setDays(value);
-                            getChartData(value as number, "sFtHfYh6UyXjd6Il8oma");
+                            const selectedExercise = exercises[selectedExerciseIndex];
+                            if (selectedExercise) {
+                                getChartData(value as number, selectedExercise.id);
+                            }
                         }}
-                        itemStyle={{ height: 36, fontSize: 14 }}
+                        itemStyle={{height: 36, fontSize: 14}}
                     >
-                        <Picker.Item label="28 Days" value={28} />
+                        <Picker.Item label="28 Days" value={28}/>
                         {scopeFilter.map(filter => (
-                            <Picker.Item key={filter.key} label={filter.label} value={filter.value} />
+                            <Picker.Item key={filter.key} label={filter.label} value={filter.value}/>
                         ))}
                     </Picker>
                 </View>
             </View>
-            <Pressable className="flex-1 bg-gray-700 rounded-lg p-2 mb-2 w-1/3" >
-                <Text className="text-blue-400 font-bold text-l">TEST</Text>
-            </Pressable>
+
+            <View className="flex-row justify-between items-center mb-2">
+                <Pressable
+                    className="bg-gray-700 px-4 py-2 rounded-lg"
+                    onPress={openExerciseModal}
+                >
+                    <Text className="text-white text-base">
+                        {exercises[selectedExerciseIndex]?.name || 'Loading...'}
+                    </Text>
+                </Pressable>
+            </View>
+
             <View className="bg-zinc-800 rounded-xl p-4 mb-6">
                 <LineChart
                     data={testChartData}
@@ -264,30 +340,30 @@ const ViewWorkouts = () => {
                         backgroundGradientTo: '#18181b',
                         color: () => '#FF5400',
                         labelColor: () => '#fff',
-                        propsForDots: { r: '5', strokeWidth: '2', stroke: '#FF5400' },
-                        propsForBackgroundLines: { stroke: '#334155' },
+                        propsForDots: {r: '5', strokeWidth: '2', stroke: '#FF5400'},
+                        propsForBackgroundLines: {stroke: '#334155'},
                     }}
-                    style={{ borderRadius: 12 }}
+                    style={{borderRadius: 12}}
                 />
             </View>
             <View className="flex-row justify-between items-center mb-6">
                 <Text className="text-white text-xl font-bold mb-4">Progress Gallery</Text>
                 <Pressable>
-                    <Text className="text-blue-400 font-bold text-l mb-4 mr-4" >View</Text>
+                    <Text className="text-blue-400 font-bold text-l mb-4 mr-4">View</Text>
                 </Pressable>
             </View>
             <ScrollView horizontal className="flex-row mb-6">
                 {gallery.map((pic, idx) => (
                     <View key={idx} className="items-center mr-4">
-                        <View>
-                            <Image source={{ uri: pic.uri }} className="w-20 h-32 rounded-lg bg-zinc-700" />
+                        <Pressable onPress={() => openModal(pic)}>
+                            <Image source={{uri: pic.uri}} className="w-20 h-32 rounded-lg bg-zinc-700"/>
                             <Pressable
                                 className="absolute top-0 right-0 p-2 z-0"
                                 onPress={() => handleDeletePic(idx)}
                             >
-                                <AntDesign name="delete" size={12} color="red" />
+                                <AntDesign name="delete" size={12} color="red"/>
                             </Pressable>
-                        </View>
+                        </Pressable>
                         <Text className="text-xs text-white mt-1">{pic.date}</Text>
                     </View>
                 ))}
@@ -300,14 +376,13 @@ const ViewWorkouts = () => {
                 </TouchableOpacity>
             </ScrollView>
 
-            {/* Modal for in-depth gallery view */}
             <Modal visible={modalVisible} transparent animationType="fade">
                 <View className="flex-1 bg-black/80 justify-center items-center p-2">
                     <View className="bg-zinc-900 rounded-xl p-3 items-center w-full h-full max-w-full max-h-full">
                         {selectedPic && (
                             <>
                                 <Image
-                                    source={{ uri: selectedPic.uri }}
+                                    source={{uri: selectedPic.uri}}
                                     className="w-full h-5/6 rounded-xl mb-3"
                                     resizeMode="contain"
                                 />
@@ -324,10 +399,72 @@ const ViewWorkouts = () => {
                 </View>
             </Modal>
 
+            <Modal visible={exerciseModalVisible} transparent animationType="slide">
+                <TouchableOpacity
+                    className="flex-1 bg-black/85"
+                    onPress={() => setExerciseModalVisible(false)}
+                />
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    className="flex-1 p-4 bg-black/85"
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+                >
+                    <View className="flex-row justify-between items-center">
+                        <Text className="m-4 text-white text-xl font-bold">Select Exercise</Text>
+                        <Pressable
+                            className="flex-row m-4"
+                            onPress={() => setExerciseModalVisible(false)}
+                        >
+                            <AntDesign name="close" size={24} color="white"/>
+                        </Pressable>
+                    </View>
+
+                    <View className="mx-4 mb-4">
+                        <TextInput
+                            className="bg-gray-700 text-white p-3 rounded-lg"
+                            placeholder="Search exercises..."
+                            placeholderTextColor="#9ca3af"
+                            value={searchQuery}
+                            onChangeText={handleSearch}
+                            autoCorrect={false}
+                        />
+                    </View>
+
+                    <FlatList
+                        data={filteredExercises}
+                        keyExtractor={(item, index) => item.id || index.toString()}
+                        className="flex-1"
+                        renderItem={({item}) => {
+                            const originalIndex = exercises.findIndex(ex => ex.id === item.id);
+                            const isSelected = selectedExerciseIndex === originalIndex;
+                            return (
+                                <TouchableOpacity
+                                    className={`p-4 rounded-lg mb-3 mx-4 border ${
+                                        isSelected
+                                            ? 'bg-orange-600 border-orange-500'
+                                            : 'bg-gray-800 border-gray-700'
+                                    }`}
+                                    onPress={() => handleExerciseSelect(originalIndex)}
+                                >
+                                    <Text className={`text-lg font-bold ${
+                                        isSelected ? 'text-white' : 'text-white'
+                                    }`}>
+                                        {item.name}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        }}
+                        showsVerticalScrollIndicator={false}
+                    />
+                </KeyboardAvoidingView>
+            </Modal>
+
             <Text className="text-white text-xl font-bold mb-4">Personal Lifting Goal</Text>
             <View className="bg-zinc-800 rounded-xl p-4 items-center mb-8">
-                <Text className="text-white text-base mb-1">Current Max: <Text className="font-bold">{goal.currentMax}kg</Text></Text>
-                <Text className="text-white text-base mb-2">Goal: <Text className="font-bold">{goal.goal}kg</Text></Text>
+                <Text className="text-white text-base mb-1">Current Max: <Text
+                    className="font-bold">{goal.currentMax}kg</Text></Text>
+                <Text className="text-white text-base mb-2">Goal: <Text
+                    className="font-bold">{goal.goal}kg</Text></Text>
                 {goal.achieved ? (
                     <Text className="text-emerald-400 font-bold mt-2">Goal Achieved! New goal set.</Text>
                 ) : (
@@ -340,7 +477,12 @@ const ViewWorkouts = () => {
                 )}
             </View>
             <Button title="test"
-            onPress={ () => getChartData(30, "sFtHfYh6UyXjd6Il8oma")}/>
+                    onPress={() => {
+                        const selectedExercise = exercises[selectedExerciseIndex];
+                        if (selectedExercise) {
+                            getChartData(30, selectedExercise.id);
+                        }
+                    }}/>
         </ScrollView>
     );
 };
