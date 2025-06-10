@@ -1,8 +1,3 @@
-import React from 'react';
-import { render } from '@testing-library/react-native';
-import { NavigationContainer } from '@react-navigation/native';
-
-import Index from '../index';
 import {calculatePlates, calculateWeight, PlateSet} from "../calculator";
 
 
@@ -41,14 +36,15 @@ describe('Plate Calculator', () => {
         });
 
         it('should calculate the plate set correctly', () => {
-            const result = calculatePlates(barWeight, (25 + 20 + 25));
+            const result = calculatePlates(barWeight, (25 + barWeight + 25));
+            console.log(result);
 
-            expect(result).toBe({
-                p20kg: 1,
-                p15kg: 0,
-                p10kg: 0,
-                p5kg: 1
-            });
+            if (result == null) fail('result should not be null');
+
+            expect(result.p20kg).toBe(1);
+            expect(result.p15kg).toBe(0);
+            expect(result.p10kg).toBe(0);
+            expect(result.p5kg).toBe(1);
         });
     });
 });
