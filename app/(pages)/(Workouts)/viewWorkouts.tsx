@@ -30,15 +30,7 @@ const dummyProgressData = [
     {date: '2024-05-15', weight: 62},
     {date: '2024-06-01', weight: 65},
 ];
-const dummyGallery = [
-    {uri: 'https://via.placeholder.com/120x160?text=Day+1', date: '2024-05-01'},
-    {uri: 'https://via.placeholder.com/120x160?text=Day+30', date: '2024-06-01'},
-];
-const dummyGoal = {
-    currentMax: 100,
-    goal: 120,
-    achieved: false,
-};
+
 const dummyStreak = 7;
 
 const chartData = {
@@ -55,8 +47,8 @@ const chartData = {
 const screenWidth = Dimensions.get('window').width - 32;
 
 const ViewWorkouts = () => {
-    const [gallery, setGallery] = useState(dummyGallery);
-    const [goal, setGoal] = useState(dummyGoal);
+    const [gallery, setGallery] = useState([])
+    const [goal, setGoal] = useState({currentMax:0, goal: 0, achieved: false});
     const [modalVisible, setModalVisible] = useState(false);
     const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
     const [selectedPic, setSelectedPic] = useState<{ uri: string; date: string } | null>(null);
@@ -240,6 +232,7 @@ const ViewWorkouts = () => {
         if (selectedExercise) {
             getChartData(daysNum, selectedExercise.id);
         }
+        fetchAndUpdateGoal(selectedExercise.id);
     };
 
     const openExerciseModal = () => {
@@ -259,6 +252,40 @@ const ViewWorkouts = () => {
             setFilteredExercises(filtered);
         }
     };
+
+    const fetchAndUpdateGoal = async (exerciseId: string) => {
+        const goalRef = doc(db, 'users', userData.userId, 'exerciseMaxes', exerciseId, 'goal', 'value');
+        const maxRef = doc(db, 'users', userData.userId, 'exerciseMaxes', exerciseId, 'timePeriods', '28');
+        const [goalSnap, maxSnap] = await Promise.all([getDoc(goalRef), getDoc(maxRef)]);
+
+        const dbGoal = goalSnap.exists() ? goalSnap.data().goal || 0 : 0;
+        const dbCurrentMax = maxSnap.exists() ? maxSnap.data().estimatedMax1RM || 0 : 0;
+
+        let newGoal = dbGoal;
+        let achieved = false;
+
+        if (dbCurrentMax >= dbGoal) {
+            // Increment by 2.5 or set to next 2.5 above new max
+            const increment = 2.5;
+            newGoal = Math.ceil((dbCurrentMax + increment) / increment) * increment;
+            achieved = true;
+            // Save new goal to Firestore
+            await setDoc(goalRef, { goal: newGoal, currentMax: dbCurrentMax }, { merge: true });
+        }
+
+        setGoal({
+            currentMax: dbCurrentMax,
+            goal: newGoal,
+            achieved,
+        });
+    };
+
+    useEffect(() => {
+        const selectedExercise = exercises[selectedExerciseIndex];
+        if (selectedExercise && userData?.userId) {
+            fetchAndUpdateGoal(selectedExercise.id);
+        }
+    }, [exercises, selectedExerciseIndex, userData]);
 
     useEffect(() => {
         const daysNum = typeof days === 'string' ? parseInt(days) : days;
@@ -444,7 +471,9 @@ const ViewWorkouts = () => {
                                             ? 'bg-orange-600 border-orange-500'
                                             : 'bg-gray-800 border-gray-700'
                                     }`}
-                                    onPress={() => handleExerciseSelect(originalIndex)}
+                                    onPress={() => {
+                                        handleExerciseSelect(originalIndex);
+                                        setDays(28)}}
                                 >
                                     <Text className={`text-lg font-bold ${
                                         isSelected ? 'text-white' : 'text-white'
@@ -465,24 +494,10 @@ const ViewWorkouts = () => {
                     className="font-bold">{goal.currentMax}kg</Text></Text>
                 <Text className="text-white text-base mb-2">Goal: <Text
                     className="font-bold">{goal.goal}kg</Text></Text>
-                {goal.achieved ? (
+                {goal.achieved && (
                     <Text className="text-emerald-400 font-bold mt-2">Goal Achieved! New goal set.</Text>
-                ) : (
-                    <TouchableOpacity
-                        className="bg-accent-orange px-4 py-2 rounded-lg mt-2"
-                        onPress={handleAchieveGoal}
-                    >
-                        <Text className="text-white font-semibold">Mark as Achieved</Text>
-                    </TouchableOpacity>
                 )}
             </View>
-            <Button title="test"
-                    onPress={() => {
-                        const selectedExercise = exercises[selectedExerciseIndex];
-                        if (selectedExercise) {
-                            getChartData(30, selectedExercise.id);
-                        }
-                    }}/>
         </ScrollView>
     );
 };
