@@ -30,13 +30,25 @@ const Profile = () => {
         }, [user])
     );
 
+    if (!userData) {
+        return null;
+    }
+
+    if (userData.premiumMember) {
+
+    }
+
     return (
         <SafeAreaView className="items-center bg-primary-background h-full pb-10 max-w-screen">
             <ScrollView className="pb-5" showsVerticalScrollIndicator={false}>
             { userData && (
                 <View className="items-center">
                     <Image source={images.avatar} className="w-20 h-20 rounded-full mt-20 mb-2.5"/>
-                    <Text className="font-bold text-white text-3xl">{userData.firstName} {userData.lastName}</Text>
+                    <View className="flex-row items-center">
+                        <Text className="font-bold text-white text-2xl">{userData.firstName} {userData.lastName}</Text>
+                        <Image source={images.verified} className="w-5 h-5 rounded-full ml-2"/>
+
+                    </View>
                     <Text className="text-xl text-accent-orange">@{userData.username}</Text>
 
                     <View className="flex-row justify-center items-center w-3/4 mt-4">
@@ -69,7 +81,6 @@ const Profile = () => {
                     </View>
 
                     <Link href="/(pages)/settings" className="font-lato-bold text-white mb-2">Settings</Link>
-                    <Link href="/(pages)/onboarding" className="font-lato-bold text-white mb-2">Onboarding</Link>
 
                     <TouchableOpacity onPress={signOut} className="bg-accent-orange py-3 px-6 rounded-lg items-center">
                         <Text className="text-white font-lato-bold">Logout</Text>

@@ -1,9 +1,10 @@
-import {View, Text, SafeAreaView, FlatList, TouchableOpacity} from 'react-native'
+import {View, Text, SafeAreaView, FlatList, TouchableOpacity, Alert} from 'react-native'
 import React from 'react'
 import {StripeProvider} from "@stripe/stripe-react-native";
 import Checkout from "@/components/checkout";
 import {auth, db} from "@/config/firebase";
-import {doc, updateDoc} from "firebase/firestore";
+import {doc, getDoc, updateDoc} from "firebase/firestore";
+import {router} from "expo-router";
 
 const Premium = () => {
 
@@ -27,6 +28,7 @@ const Premium = () => {
 
             if (userDocSnap.exists() && userDocSnap.data().premiumMember) {
                 Alert.alert('Already have Premium', 'You are already a premium member.');
+                router.push('/(pages)/(tabs)/profile')
                 return;
             }
 
@@ -35,6 +37,8 @@ const Premium = () => {
                 updatedAt: new Date().toISOString()
             })
 
+            Alert.alert('Upgrade Success!', 'We look forward to seeing you reach your goals with premium!');
+            router.push('/(pages)/(tabs)/profile')
         } catch (error) {
             console.error('Error saving user data:', error)
         }
