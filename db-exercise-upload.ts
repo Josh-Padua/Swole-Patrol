@@ -16,3 +16,5 @@ export const uploadExercises = async () => {
 
     await batch.commit();
 };
+
+// Credit for the exercises.json file goes to https://github.com/yuhonas/free-exercise-db

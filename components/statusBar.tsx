@@ -88,7 +88,7 @@ const StatusBar = ({title, current, target, targetUpdateAction, config}:{title:s
             }}>
                 <View className={'flex-row'}>
                     <Text className={'text-white text-base'} style={{fontWeight: 500}}>{`${title}: `}</Text>
-                    <Text className={'text-white text-base'}>{_current}</Text>
+                    <Text className={'text-white text-base'}>{(Math.round(_current * 1000) / 1000)}</Text>
                 </View>
                 {isEditing ? (
                     <TextInput
