@@ -342,12 +342,11 @@ const ViewWorkouts = () => {
                 getChartData(daysNum, "sFtHfYh6UyXjd6Il8oma");
                 getStreakFromFirebase();
                 loadGallery();
-                const selectedExercise = exercises[selectedExerciseIndex];
-                if (selectedExercise) {
-                    fetchAndUpdateGoal(selectedExercise.id);
+                if (exercises.length > 0) {
+                    fetchAndUpdateGoal(exercises[0].id);
                 }
             }
-        }, [userData?.userId, days, exercises, selectedExerciseIndex])
+        }, [userData?.userId, days])
     );
 
     return (
@@ -523,6 +522,14 @@ const ViewWorkouts = () => {
                             autoCorrect={false}
                         />
                     </View>
+
+                    {exercises.length === 0 && (
+                        <View className="mx-4 mb-4">
+                            <Text className="text-white text-base text-center">
+                                No workout data found. Please input workout data to view exercises.
+                            </Text>
+                        </View>
+                    )}
 
                     <FlatList
                         data={filteredExercises}
