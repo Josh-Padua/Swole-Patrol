@@ -57,12 +57,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!loading) {
             if (user) {
-                router.replace('/');
+                if (userData) {
+                    if (!userData.basicOnboarding) {
+                        router.replace('/(pages)/(onboarding)/onboarding');
+                    } else if (!userData.gymOnboarding) {
+                        router.replace('/(pages)/(onboarding)/gymProgress');
+                    }
+                    else {
+                        router.replace('/(tabs)');
+                    }
+                }
             } else {
                 router.replace('/(auth)/login');
             }
         }
-    }, [user, loading]);
+    }, [user, loading, userData]);
 
     const signIn = async (email: string, password: string) => {
         try {
@@ -83,7 +92,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 lastName,
                 email,
                 createdAt: new Date().toISOString(),
-                userId: response.user.uid
+                userId: response.user.uid,
+                basicOnboarding: false,
+                gymOnboarding: false,
             });
 
             console.log(response);
