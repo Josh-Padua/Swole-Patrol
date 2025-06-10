@@ -1,6 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { NavigationContainer } from '@react-navigation/native';
+
 import Index from '../index';
+
 
 // Mock Firebase & Firestore
 jest.mock('@/config/firebase', () => ({
@@ -19,8 +22,32 @@ jest.mock('firebase/firestore', () => ({
     query: jest.fn(),
 }));
 
+
+// Mock expo-router
+jest.mock('expo-router', () => {
+    const React = require('react');
+
+    return {
+        useFocusEffect: (callback) => {
+            React.useEffect(() => {
+                const cleanup = callback();
+                return cleanup;
+            }, []);
+        },
+        useRouter: () => ({ push: jest.fn() }),
+        useNavigation: () => ({ navigate: jest.fn() }),
+        router: { push: jest.fn() },
+        Link: ({ children }) => children,
+    };
+});
+
+
 describe('Dashboard', () => {
     it('renders without crashing', () => {
-        render(<Index />);
+        render(
+            <NavigationContainer>
+                <Index />
+            </NavigationContainer>
+        );
     });
 });
