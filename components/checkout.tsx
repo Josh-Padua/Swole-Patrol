@@ -11,6 +11,13 @@ const Checkout = () => {
 
     const initializePaymentSheet = async () => {
 
+        const { paymentIntent, customer } = await fetchAPI("/api/(stripe)/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+
         const { error } = await initPaymentSheet({
             merchantDisplayName: "Swole Patrol",
 
@@ -29,18 +36,25 @@ const Checkout = () => {
                         headers: {
                             "Content-Type": "application/json",
                         },
-                        body: JSON.stringify({
-                            name: fullName || email.split('@')[0],
-                            email: email,
-                        })
                     })
 
                     if (paymentIntent.client_secret) {
-                        intentCreationCallback({ clientSecret: paymentIntent.client_secret });
+                        const { result } = await fetchAPI("/api/(stripe)/pay", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                payment_method_id: paymentMethod.id,
+                                payment_intent_id: paymentIntent.id,
+                                customer_id: customer,
+                                client_secret: paymentIntent.client_secret
+                            })
+                        })
                     }
-
                 },
             },
+            returnURL: "Swole-Patrol://premium"
         });
         if (error) {
             setLoading(true);
@@ -53,13 +67,11 @@ const Checkout = () => {
     }, [])
 
     const openPaymentSheet = async () => {
-
+        await initializePaymentSheet();
         const { error } = await presentPaymentSheet();
 
         if (error) {
-            if (error.code === PaymentSheetError.Canceled) {
-                Alert.alert(`Error code: ${error.code}`, error.message);
-            }
+            Alert.alert(`Error code: ${error.code}`, error.message)
         } else {
             setSuccess(true);
             // Payment completed - show a confirmation screen.
@@ -78,3 +90,4 @@ const Checkout = () => {
     )
 }
 export default Checkout
+
