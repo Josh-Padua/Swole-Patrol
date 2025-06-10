@@ -5,23 +5,27 @@ import images from "@/constants/images";
 import { BarChart} from "react-native-chart-kit";
 import {useAuth} from "@/context/AuthProvider";
 import {useFocusEffect} from "@react-navigation/native";
-import {getDoc, doc} from "firebase/firestore";
+import {getDoc, doc, collection, getDocs} from "firebase/firestore";
 import { db } from '@/config/firebase';
 
 const Profile = () => {
     const { signOut, user } = useAuth();
     const [userData, setUserData] = useState(null);
+    const [userStreak, setUserStreak] = useState(0);
+
 
     useFocusEffect(
         useCallback(() => {
             const fetchUserData = async () => {
                 if (user) {
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    const streakDoc = await getDoc(doc(db, 'users', user.uid, 'streak', 'current'));
 
                     if (userDoc.exists()) {
                         setUserData(userDoc.data());
-                    } else {
-                        console.error('User not found.');
+                    }
+                    if (streakDoc.exists()) {
+                        setUserStreak(streakDoc.data().currentStreak || 0);
                     }
                 }
             };
@@ -61,6 +65,10 @@ const Profile = () => {
                                     <Text className="font-bold text-lg text-white">BMI</Text>
                                     <Text className="text-white">{userData.bmi}</Text>
                                 </View>
+                            </View>
+                            <View className="mt-2 flex-row">
+                                <Text className="font-lato text-white text-lg">Current workout streak: </Text>
+                                <Text className="font-lato text-accent-orange text-lg">{userStreak} Days!</Text>
                             </View>
 
                             <View className="bg-primary rounded-lg p-6 mt-4 mb-4 w-full items-center max-w-64">
