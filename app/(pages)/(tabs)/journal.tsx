@@ -14,7 +14,7 @@ export default function JournalMain() {
     const [isRunning, setIsRunning] = useState(false);
     const [secondsElapsed, setSecondsElapsed] = useState(0);
     const [millisecondsElapsed, setMillisecondsElapsed] = useState(0); // Represents centiseconds (1/100 of a second)
-    const [laps, setLaps] = useState<string[]>([]);
+    // Removed laps state and related functions
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [isSaving, setIsSaving] = useState(false); // New state for saving indicator
 
@@ -46,23 +46,19 @@ export default function JournalMain() {
         stop();
         setSecondsElapsed(0);
         setMillisecondsElapsed(0);
-        setLaps([]);
+        // Laps reset removed
     };
 
-    const lap = () => {
-        const currentTime = formatTime(secondsElapsed, millisecondsElapsed);
-        setLaps((prevLaps) => [...prevLaps, currentTime]);
-    };
+
 
     const formatTime = (seconds: number, milliseconds: number) => {
         const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
         const secs = (seconds % 60).toString().padStart(2, '0');
-        // millisecondsElapsed now represents centiseconds (00-99), which is what we want for XX:XX:XX
         const ms = milliseconds.toString().padStart(2, '0');
         return `${mins}:${secs}:${ms}`;
     };
 
-    // New function to save time to Firebase
+    // Function to save time to Firebase (remains the same)
     const saveTimeInGym = async () => {
         const user = auth.currentUser;
         if (!user) {
@@ -124,12 +120,6 @@ export default function JournalMain() {
                             <Text className="text-white font-lato-semibold">{isRunning ? 'Pause' : 'Start'}</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity
-                            onPress={lap}
-                            disabled={!isRunning}
-                            className={`py-2 px-4 rounded-lg ${isRunning ? 'bg-white' : 'bg-primary'}`}>
-                            <Text className={`font-lato-semibold ${isRunning ? 'text-black' : 'text-white'}`}>LAP</Text>
-                        </TouchableOpacity>
 
                         <TouchableOpacity
                             onPress={reset}
@@ -152,21 +142,6 @@ export default function JournalMain() {
                             </TouchableOpacity>
                         )}
                     </View>
-
-                    {/* Laps List */}
-                    {laps.length > 0 && (
-                        <View className="mt-2.5 w-4/5">
-                            <Text className="text-xl font-lato-bold mb-2.5 text-white">Laps:</Text>
-                            <FlatList
-                                data={laps}
-                                renderItem={({ item, index }) => (
-                                    <Text className="font-lato text-2xl text-white">{index + 1}. {item}</Text>
-                                )}
-                                keyExtractor={(item, index) => index.toString()}
-                                className="max-h-52"
-                            />
-                        </View>
-                    )}
                 </View>
             </ScrollView>
         </SafeAreaView>
