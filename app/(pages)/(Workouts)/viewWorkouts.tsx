@@ -8,7 +8,6 @@ import {
     TouchableOpacity,
     Modal,
     Pressable,
-    Button,
     TextInput,
     Alert,
     FlatList,
@@ -31,14 +30,12 @@ const dummyProgressData = [
     {date: '2024-06-01', weight: 65},
 ];
 
-const dummyStreak = 7;
-
 const chartData = {
     labels: dummyProgressData.map(d => d.date.slice(5)),
     datasets: [
         {
             data: dummyProgressData.map(d => d.weight),
-            color: () => '#22d3ee',
+            color: () => '#FF5400',
             strokeWidth: 2,
         },
     ],
@@ -47,8 +44,8 @@ const chartData = {
 const screenWidth = Dimensions.get('window').width - 32;
 
 const ViewWorkouts = () => {
-    const [gallery, setGallery] = useState([])
-    const [goal, setGoal] = useState({currentMax:0, goal: 0, achieved: false});
+    const [gallery, setGallery] = useState<{ uri: string; date: string }[]>([]);
+    const [goal, setGoal] = useState({currentMax: 0, goal: 0, achieved: false});
     const [modalVisible, setModalVisible] = useState(false);
     const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
     const [selectedPic, setSelectedPic] = useState<{ uri: string; date: string } | null>(null);
@@ -65,6 +62,10 @@ const ViewWorkouts = () => {
     const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number>(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredExercises, setFilteredExercises] = useState<{ id: string, name: string }[]>([]);
+    const [streak, setStreak] = useState<{ currentStreak: number; lastCheckin: string }>({
+        currentStreak: 0,
+        lastCheckin: '',
+    });
 
     const formatDateYYYYMMDD = (date: Date) => {
         const year = date.getFullYear();
@@ -210,14 +211,6 @@ const ViewWorkouts = () => {
         );
     };
 
-    const handleAchieveGoal = () => {
-        setGoal({
-            currentMax: goal.goal,
-            goal: goal.goal + 10,
-            achieved: true,
-        });
-    };
-
     const openModal = (pic: { uri: string; date: string }) => {
         setSelectedPic(pic);
         setModalVisible(true);
@@ -230,6 +223,7 @@ const ViewWorkouts = () => {
         const daysNum = typeof days === 'string' ? parseInt(days) : days;
         const selectedExercise = exercises[exerciseIndex];
         if (selectedExercise) {
+            getChartData(336, selectedExercise.id);
             getChartData(daysNum, selectedExercise.id);
         }
         fetchAndUpdateGoal(selectedExercise.id);
@@ -270,7 +264,7 @@ const ViewWorkouts = () => {
             newGoal = Math.ceil((dbCurrentMax + increment) / increment) * increment;
             achieved = true;
             // Save new goal to Firestore
-            await setDoc(goalRef, { goal: newGoal, currentMax: dbCurrentMax }, { merge: true });
+            await setDoc(goalRef, {goal: newGoal, currentMax: dbCurrentMax}, {merge: true});
         }
 
         setGoal({
@@ -279,6 +273,66 @@ const ViewWorkouts = () => {
             achieved,
         });
     };
+
+    const getStreakFromFirebase = async () => {
+        if (!userData?.userId) return;
+
+        const streakRef = doc(db, 'users', userData.userId, 'streak', 'current');
+        const streakSnap = await getDoc(streakRef);
+
+        const today = formatDateYYYYMMDD(new Date());
+        const yesterdayDate = new Date();
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterday = formatDateYYYYMMDD(yesterdayDate);
+
+        if (streakSnap.exists()) {
+            const data = streakSnap.data();
+            let {currentStreak, lastCheckin} = data;
+
+            if (lastCheckin === today) {
+                setStreak({currentStreak, lastCheckin});
+                return;
+            }
+
+            if (lastCheckin === yesterday) {
+                setStreak({currentStreak, lastCheckin});
+                return;
+            }
+
+            // Streak is broken
+            await setDoc(streakRef, {
+                currentStreak: 0,
+                lastCheckin: yesterday,
+            });
+            setStreak({
+                currentStreak: 0,
+                lastCheckin: yesterday,
+            });
+        } else {
+            await setDoc(streakRef, {
+                currentStreak: 0,
+                lastCheckin: yesterday,
+            });
+            setStreak({
+                currentStreak: 0,
+                lastCheckin: yesterday,
+            });
+        }
+    };
+
+    const setStreakInFirebase = async (newStreak: number) => {
+        if (streak.lastCheckin === formatDateYYYYMMDD(new Date())) {
+            alert("You have already checked in today!");
+            return;
+        }
+        const streakRef = doc(db, 'users', userData.userId, 'streak', 'current');
+        await setDoc(streakRef, {
+            currentStreak: newStreak,
+            lastCheckin: formatDateYYYYMMDD(new Date())
+        }, {merge: true});
+
+        setStreak({currentStreak: newStreak, lastCheckin: formatDateYYYYMMDD(new Date())});
+    }
 
     useEffect(() => {
         const selectedExercise = exercises[selectedExerciseIndex];
@@ -295,13 +349,32 @@ const ViewWorkouts = () => {
         loadGallery();
     }, []);
 
+    useEffect(() => {
+        if (userData?.userId) {
+            getStreakFromFirebase();
+        }
+    }, [userData?.userId]);
+
     return (
-        <ScrollView className="flex-1 bg-zinc-900 px-4 py-4">
-            <View className="bg-accent-orange rounded-xl p-4 mb-6 items-center">
-                <Text className="text-white text-lg font-bold">Workout Streak</Text>
-                <Text className="text-3xl text-white font-extrabold mt-1">{dummyStreak} days</Text>
-                <Text className="text-white text-xs mt-1">Keep it up!</Text>
-            </View>
+        <ScrollView className="flex-1 bg-zinc-900 px-4 py-4 mb-14">
+            {streak.lastCheckin == formatDateYYYYMMDD(new Date()) ? (
+                <View className="bg-accent-orange rounded-xl p-4 mb-6 items-center">
+                    <Text className="text-white text-lg font-bold w-full text-center">Workout Streak</Text>
+                    <Text className="text-3xl text-white font-extrabold mt-1">{streak.currentStreak} days</Text>
+                    <Text className="text-white text-xs mt-1">Keep it up!</Text>
+                </View>) : (
+                <Pressable
+                    className={streak.currentStreak === 0 ? ("bg-accent-red rounded-xl p-4 mb-6 items-center") : ("bg-accent-green rounded-xl p-4 mb-6 items-center")}
+                    onPress={() => setStreakInFirebase(streak.currentStreak + 1)}>
+                    {streak.currentStreak === 0 && (
+                        <Text className="text-white text-xl font-bold w-full text-center">Oh No, You've lost your
+                            streak</Text>
+                    )}
+                    <Text className="text-white text-lg font-bold w-full text-center">Workout Streak</Text>
+                    <Text className="text-3xl text-white font-extrabold mt-1">{streak.currentStreak} days</Text>
+                    <Text className="text-white text-s mt-1">Press to checkin!</Text>
+                </Pressable>
+            )}
             <View className="flex-row justify-between items-center mb-0">
                 <Text className="text-white text-xl font-bold">Progress Chart</Text>
                 <View style={{
@@ -316,10 +389,9 @@ const ViewWorkouts = () => {
                     <Picker
                         selectedValue={days}
                         style={Platform.OS === 'ios' ? ({
-                            width: 110,
+                            width: 120,
                             color: 'white',
                             height: 50,
-                            width: 120,
                             top: 2,
                             left: -10
                         }) : ({
@@ -473,7 +545,8 @@ const ViewWorkouts = () => {
                                     }`}
                                     onPress={() => {
                                         handleExerciseSelect(originalIndex);
-                                        setDays(28)}}
+                                        setDays(28)
+                                    }}
                                 >
                                     <Text className={`text-lg font-bold ${
                                         isSelected ? 'text-white' : 'text-white'
