@@ -15,14 +15,21 @@ import {useAuth} from "@/context/AuthProvider";
 import {AntDesign} from "@expo/vector-icons";
 import {collection, doc, getDoc, getDocs, setDoc} from 'firebase/firestore';
 import {db} from '@/config/firebase';
-import {Exercise, WorkoutExercise} from "@/types/workout";
+import {Exercise, WorkoutExercise, Set} from "@/types/workout";
 import {router} from "expo-router";
 
 const Workouts = () => {
+    const formatDateYYYYMMDD = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const {userData} = useAuth();
     const [date, setDate] = useState(new Date());
     const [dayString, setDayString] = useState(new Date().toLocaleDateString('en-US', {weekday: 'long'}));
-    const [dateString, setDateString] = useState(new Date().toLocaleDateString('en-GB').replace(/\//g, '-'));
+    const [dateString, setDateString] = useState(formatDateYYYYMMDD(new Date()));
     const [currentWorkout, setCurrentWorkout] = useState('Push');
     const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
     const [saving, setSaving] = useState(false);
@@ -32,7 +39,7 @@ const Workouts = () => {
 
     const updateDateStrings = (newDate: any) => {
         const day = newDate.toLocaleDateString('en-US', {weekday: 'long'});
-        const formattedDate = newDate.toLocaleDateString('en-GB').replace(/\//g, '-');
+        const formattedDate = formatDateYYYYMMDD(newDate);
 
         setDayString(day);
         setDateString(formattedDate);
@@ -54,18 +61,24 @@ const Workouts = () => {
         updateDateStrings(newDate);
     };
 
+    const calcOneRepMax = (weight: number, reps: number) => {
+        if (!weight || !reps || reps < 1) return 0;
+        if (reps === 1) return weight;
+        if (reps > 10 && reps <= 16) return Math.round(weight * (reps/(reps*1.175)) * (36 / (37 - reps)));
+        if (reps > 16) return 0; // Avoid unrealistic rep ranges for 1RM calculation
+        return Math.round(weight * (36 / (37 - reps)));
+    };
+
     const addSet = (exerciseId: number) => {
-        setExercises((prev) => {
-            return prev.map((exercise) => {
+        setExercises((prev) =>
+            prev.map((exercise) => {
                 if (exercise.id === exerciseId) {
-                    return {
-                        ...exercise,
-                        sets: [...exercise.sets, {weight: 0, reps: 0}]
-                    };
+                    const newSet: Set = { weight: 0, reps: 0, Estimated1RM: 0 };
+                    return { ...exercise, sets: [...exercise.sets, newSet] };
                 }
                 return exercise;
-            });
-        });
+            })
+        );
     };
 
     const removeSet = (exerciseId: number) => {
@@ -84,21 +97,31 @@ const Workouts = () => {
         });
     };
 
-    const updateSet = (exerciseId: number, setIndex: number, field: 'weight' | 'reps', value: number) => {
-        setExercises((prev) => {
-            const updatedExercises = prev.map((exercise) =>
-                exercise.id === exerciseId
-                    ? {
-                        ...exercise,
-                        sets: exercise.sets.map((set, index) =>
-                            index === setIndex ? {...set, [field]: value} : set
-                        ),
-                    }
-                    : exercise
-            );
-            console.log(`Updated exercise ID: ${exerciseId}, Field: ${field}, Value: ${value}`);
-            return updatedExercises;
-        });
+    const updateSet = (
+        exerciseId: number,
+        setIndex: number,
+        field: 'weight' | 'reps',
+        value: number
+    ) => {
+        setExercises((prev) =>
+            prev.map((exercise) => {
+                if (exercise.id === exerciseId) {
+                    const updatedSets = exercise.sets.map((set, idx) => {
+                        if (idx === setIndex) {
+                            const updatedSet = { ...set, [field]: value };
+                            const Estimated1RM = calcOneRepMax(
+                                field === 'weight' ? value : updatedSet.weight,
+                                field === 'reps' ? value : updatedSet.reps
+                            );
+                            return { ...updatedSet, Estimated1RM };
+                        }
+                        return set;
+                    });
+                    return { ...exercise, sets: updatedSets };
+                }
+                return exercise;
+            })
+        );
     };
 
     const saveWorkoutToFirebase = async (userId: string, workoutName: string, exercises: any[]) => {
@@ -163,7 +186,7 @@ const Workouts = () => {
         setCurrentWorkout(template.name);
 
         const initializedExercises = await Promise.all(template.exercises.map(async (ex: any, index: number) => {
-            const sets = Array(ex.sets || 0).fill({weight: 0, reps: 0});
+            const sets: Set[] = Array(ex.sets || 0).fill({ weight: 0, reps: 0, Estimated1RM: 0 });
             const exercise = await getExerciseById(ex.id);
 
             return {
@@ -338,6 +361,10 @@ const Workouts = () => {
                                 <View className="flex-1 justify-center items-center">
                                     <Text className="text-white text-lg">No templates found</Text>
                                     <TouchableOpacity
+                                        onPress={() => {
+                                        setShowTemplates(false);
+                                        router.push('/(pages)/(Workouts)/templateManager')
+                                    }}
                                         className="bg-orange-600 px-4 py-2 rounded-lg mt-4"
                                     >
                                         <Text className="text-white">Create Default Templates</Text>

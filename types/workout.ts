@@ -15,6 +15,7 @@ export interface Exercise {
 export interface Set {
     weight: number;
     reps: number;
+    Estimated1RM?: number;
 }
 
 export interface WorkoutExercise {
