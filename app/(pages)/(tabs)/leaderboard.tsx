@@ -3,8 +3,6 @@ import { View, Text, FlatList, ActivityIndicator, SafeAreaView, TouchableOpacity
 import { collection, getDocs, query, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
-// No need for useSafeAreaInsets if filters aren't at the very bottom
-// import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface User {
     id: string;
@@ -19,7 +17,8 @@ interface User {
     height?: number;
     weight?: number;
     timeInGym?: number;
-    exerciseMax?: number;
+    // We'll store all relevant exerciseMaxes in a map for each user
+    exerciseMaxes?: Record<string, number>; // exerciseId -> max value
 }
 
 type FilterCategory = 'timeInGym' | 'age' | 'bmi' | 'height' | 'weight' | 'exerciseMax';
@@ -31,7 +30,7 @@ const STATIC_EXERCISES = [
 ];
 
 const Leaderboard = () => {
-    const [users, setUsers] = useState<User[]>([]);
+    const [users, setUsers] = useState<User[]>([]); // This will hold the *unfiltered* and *unsorted* raw user data
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<FilterCategory>('timeInGym');
     const [sortOrders, setSortOrders] = useState<Record<FilterCategory, 'asc' | 'desc'>>({
@@ -48,9 +47,8 @@ const Leaderboard = () => {
     const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(STATIC_EXERCISES[0]?.id || null);
     const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(STATIC_EXERCISES[0]?.name || null);
 
-    // Removed useSafeAreaInsets as it's not strictly necessary for filters at the top
-
-    const fetchUsers = useCallback(async () => {
+    // Modified: Fetch all users AND all their exercise maxes for STATIC_EXERCISES once
+    const fetchAllUsersAndExerciseMaxes = useCallback(async () => {
         setLoading(true);
         try {
             const usersCollectionRef = collection(db, 'users');
@@ -72,60 +70,63 @@ const Leaderboard = () => {
                     height: data.height ?? undefined,
                     weight: data.weight ?? undefined,
                     timeInGym: data.timeInGym ?? 0,
-                    exerciseMax: undefined,
+                    exerciseMaxes: {}, // Initialize the map for exercise maxes
                 };
 
-                if (activeFilter === 'exerciseMax' && selectedExerciseId) {
+                // Fetch exercise maxes for all STATIC_EXERCISES for this user
+                for (const exercise of STATIC_EXERCISES) {
                     try {
                         const exerciseMaxDocRef = doc(
                             db,
                             'users',
                             user.id,
                             'exerciseMaxes',
-                            selectedExerciseId,
+                            exercise.id,
                             'timePeriods',
                             '336'
                         );
                         const exerciseMaxDoc = await getDoc(exerciseMaxDocRef);
 
                         if (exerciseMaxDoc.exists()) {
-                            user.exerciseMax = exerciseMaxDoc.data()?.estimatedMax1RM ?? 0;
+                            user.exerciseMaxes![exercise.id] = exerciseMaxDoc.data()?.estimatedMax1RM ?? 0;
                         } else {
-                            user.exerciseMax = 0;
+                            user.exerciseMaxes![exercise.id] = 0;
                         }
                     } catch (error) {
-                        console.warn(`Failed to fetch exercise max for user ${user.id} and exercise ${selectedExerciseId}:`, error);
-                        user.exerciseMax = 0;
+                        console.warn(`Failed to fetch exercise max for user ${user.id} and exercise ${exercise.id}:`, error);
+                        user.exerciseMaxes![exercise.id] = 0;
                     }
                 }
                 userList.push(user);
             }
-            setUsers(userList);
+            setUsers(userList); // Set the raw, comprehensive user data
         } catch (error) {
             console.error('Failed to fetch users or exercise maxes:', error);
         } finally {
             setLoading(false);
         }
-    }, [activeFilter, selectedExerciseId]);
+    }, []); // Empty dependency array means this runs only once on mount
 
     useEffect(() => {
-        fetchUsers();
+        fetchAllUsersAndExerciseMaxes(); // Call the comprehensive fetch
         const authInstance = getAuth();
         const currentUser = authInstance.currentUser;
         if (currentUser) {
             setCurrentUserId(currentUser.uid);
         }
-    }, [fetchUsers]);
+    }, [fetchAllUsersAndExerciseMaxes]);
 
-    const sortUsers = useCallback((usersToSort: User[]) => {
+    // Modified: sortUsers now operates on the 'users' state directly
+    const sortUsers = useCallback(() => {
         const currentSortOrder = sortOrders[activeFilter];
-        return [...usersToSort].sort((a, b) => {
+        return [...users].sort((a, b) => { // Sort a copy of the 'users' state
             let aValue: any;
             let bValue: any;
 
             if (activeFilter === 'exerciseMax') {
-                aValue = a.exerciseMax ?? 0;
-                bValue = b.exerciseMax ?? 0;
+                // Access the specific exercise max from the 'exerciseMaxes' map
+                aValue = a.exerciseMaxes?.[selectedExerciseId || ''] ?? 0;
+                bValue = b.exerciseMaxes?.[selectedExerciseId || ''] ?? 0;
             } else {
                 aValue = a[activeFilter];
                 bValue = b[activeFilter];
@@ -147,9 +148,9 @@ const Leaderboard = () => {
 
             return 0;
         });
-    }, [activeFilter, sortOrders, users]);
+    }, [activeFilter, sortOrders, users, selectedExerciseId]); // Dependencies changed
 
-    const sortedUsers = sortUsers(users);
+    const sortedUsers = sortUsers(); // Call sortUsers to get the currently filtered/sorted list
 
     const handleSortPress = (filter: FilterCategory) => {
         if (activeFilter === filter) {
@@ -169,9 +170,12 @@ const Leaderboard = () => {
     };
 
     const handleExerciseFilterPress = (exerciseId: string, exerciseName: string) => {
-        setActiveFilter('exerciseMax');
         setSelectedExerciseId(exerciseId);
         setSelectedExerciseName(exerciseName);
+        // Only set activeFilter if it's not already 'exerciseMax' to prevent unnecessary re-renders
+        if (activeFilter !== 'exerciseMax') {
+            setActiveFilter('exerciseMax');
+        }
         setSortOrders(prev => ({
             ...prev,
             exerciseMax: 'desc'
@@ -249,7 +253,7 @@ const Leaderboard = () => {
                 <Text className="font-lato-bold text-accent-orange text-center text-2xl">🏆 Leaderboard</Text>
             </View>
 
-            {/* Filter Buttons Section - Back at the top */}
+            {/* Filter Buttons Section - At the top */}
             <View style={styles.filtersSection}>
                 {/* Main Filter Buttons */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollViewContent}>
@@ -261,7 +265,7 @@ const Leaderboard = () => {
                     <FilterButton title="Exercise Max" isActive={activeFilter === 'exerciseMax'} onPress={() => handleFilterPress('exerciseMax')} />
                 </ScrollView>
 
-                {/* Exercise Selection Buttons (conditionally rendered when 'exerciseMax' filter is active) */}
+                {/* Exercise Selection Buttons (conditionally rendered below main filters) */}
                 {activeFilter === 'exerciseMax' && availableExercises.length > 0 && (
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.exerciseFilterScrollViewContent}>
                         {availableExercises.map((exercise) => (
@@ -289,9 +293,8 @@ const Leaderboard = () => {
                 {getColumnHeader(activeFilter)}
             </View>
 
-            {/* FlatList should take up the remaining space */}
             <FlatList
-                data={sortedUsers}
+                data={sortedUsers} // This will now be the locally sorted/filtered data
                 keyExtractor={(item) => item.id}
                 renderItem={({ item, index }) => {
                     const isCurrentUser = item.id === currentUserId;
@@ -311,7 +314,8 @@ const Leaderboard = () => {
                                 {activeFilter === 'timeInGym'
                                     ? formatTotalSecondsToHMS(item.timeInGym)
                                     : activeFilter === 'exerciseMax'
-                                        ? (item.exerciseMax !== undefined ? item.exerciseMax?.toString() : 'N/A')
+                                        // Access the value from the new exerciseMaxes map
+                                        ? (item.exerciseMaxes?.[selectedExerciseId || ''] !== undefined ? item.exerciseMaxes[selectedExerciseId || '']?.toString() : 'N/A')
                                         : item[activeFilter] !== undefined
                                             ? item[activeFilter]?.toString()
                                             : 'N/A'}
@@ -346,29 +350,25 @@ const FilterButton: React.FC<FilterButtonProps> = ({ title, isActive, onPress })
 
 const styles = StyleSheet.create({
     safeArea: {
-        flex: 1, // Make SafeAreaView fill the entire screen
-        backgroundColor: '#1E1E1E', // Match your primary-background color
-        // No explicit padding here, SafeAreaView handles top/bottom automatically
+        flex: 1,
+        backgroundColor: '#1E1E1E',
     },
     headerContainer: {
         paddingVertical: 16,
         paddingHorizontal: 16,
     },
-    // Filter buttons section style (now at the top)
     filtersSection: {
-        marginBottom: 8, // Keeps a small gap below the filters
-        // No absolute positioning or special flex rules needed here,
-        // it just follows the normal document flow at the top.
+        marginBottom: 8,
     },
     filterScrollViewContent: {
         paddingHorizontal: 16,
-        paddingBottom: 4, // Small padding below the first row of buttons
+        paddingBottom: 4,
         justifyContent: 'center',
     },
     exerciseFilterScrollViewContent: {
         paddingHorizontal: 16,
-        paddingTop: 4, // Small padding above the second row of buttons
-        paddingBottom: 8, // Small padding below the second row of buttons
+        paddingTop: 4,
+        paddingBottom: 8,
         justifyContent: 'center',
     },
     leaderboardInfoContainer: {
