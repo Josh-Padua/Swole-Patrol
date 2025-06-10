@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, doc, getDoc } from 'firebase/firestore'; // Removed 'where' as it's no longer needed for exercise fetching
 import { db } from '@/config/firebase';
-import { getAuth } from 'firebase/auth'; // Import getAuth
+import { getAuth } from 'firebase/auth';
 
 interface User {
-    id: string; // This is the user's UID from Firebase
+    id: string;
     username: string;
     firstName: string;
     lastName: string;
@@ -19,26 +19,43 @@ interface User {
     weight?: number;
     workoutFrequency?: string;
     timeInGym?: number;
+    exerciseMax?: number; // New: to store the max for the selected exercise
 }
 
-type FilterCategory = 'timeInGym' | 'age' | 'bmi' | 'height' | 'weight' | 'gymLevel' | 'workoutFrequency';
+type FilterCategory = 'timeInGym' | 'age' | 'bmi' | 'height' | 'weight' | 'gymLevel' | 'workoutFrequency' | 'exerciseMax';
+
+// --- DIRECTLY DEFINED EXERCISES WITH PROVIDED IDs ---
+const STATIC_EXERCISES = [
+    { id: 'sFtHfYh6UyXjd6Il8oma', name: 'Bench Press' },
+    { id: 'FwK5QNG5iyK71JvPSBFM', name: 'Deadlift' },
+    { id: 'EkK4I2z15k0QcAn9M4Bg', name: 'Squat' },
+];
 
 const Leaderboard = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<FilterCategory>('timeInGym');
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-    const [currentUserId, setCurrentUserId] = useState<string | null>(null); // Changed to currentUserId
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+    // Using the static exercises directly
+    const [availableExercises] = useState(STATIC_EXERCISES); // No need for useState as it's static
+    const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(STATIC_EXERCISES[0]?.id || null);
+    const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(STATIC_EXERCISES[0]?.name || null);
+
+    // Removed the useEffect that previously fetched exercise names dynamically
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
-            const q = query(collection(db, 'users'));
-            const snapshot = await getDocs(q);
-            const userList: User[] = snapshot.docs.map((doc) => {
-                const data = doc.data();
-                return {
-                    id: doc.id, // doc.id is the UID
+            const usersCollectionRef = collection(db, 'users');
+            const usersSnapshot = await getDocs(query(usersCollectionRef));
+            let userList: User[] = [];
+
+            for (const userDoc of usersSnapshot.docs) {
+                const data = userDoc.data();
+                const user: User = {
+                    id: userDoc.id,
                     username: data.username || 'Unknown',
                     firstName: data.firstName || 'First',
                     lastName: data.lastName || 'Last',
@@ -52,51 +69,89 @@ const Leaderboard = () => {
                     weight: data.weight ?? undefined,
                     workoutFrequency: data.workoutFrequency ?? undefined,
                     timeInGym: data.timeInGym ?? 0,
+                    exerciseMax: undefined,
                 };
-            });
+
+                if (activeFilter === 'exerciseMax' && selectedExerciseId) {
+                    try {
+                        const exactPath = `users/${user.id}/exerciseMaxes/${selectedExerciseId}/timePeriods/336`;
+                        // console.log(`Attempting to fetch from path: ${exactPath}`); // Debug log
+
+                        const exerciseMaxDocRef = doc(
+                            db,
+                            'users',
+                            user.id,
+                            'exerciseMaxes',
+                            selectedExerciseId,
+                            'timePeriods', // Confirmed: NO SPACE from your screenshot
+                            '336' // The fixed '336' document
+                        );
+                        const exerciseMaxDoc = await getDoc(exerciseMaxDocRef);
+
+                        // console.log(`For user ${user.username} (${user.id}), exercise ${selectedExerciseName} (${selectedExerciseId}):`); // Debug log
+                        // console.log(`  Document exists: ${exerciseMaxDoc.exists()}`); // Debug log
+                        // if (exerciseMaxDoc.exists()) { // Debug log
+                        //     console.log(`  Document data:`, exerciseMaxDoc.data()); // Debug log
+                        //     console.log(`  estimatedMax1RM value:`, exerciseMaxDoc.data()?.estimatedMax1RM); // Debug log
+                        // } else { // Debug log
+                        //     console.log(`  Document NOT found at path: ${exactPath}`); // Debug log
+                        // } // Debug log
+
+                        if (exerciseMaxDoc.exists()) {
+                            user.exerciseMax = exerciseMaxDoc.data()?.estimatedMax1RM ?? 0;
+                        } else {
+                            user.exerciseMax = 0; // No data found for this exercise/period
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to fetch exercise max for user ${user.id} and exercise ${selectedExerciseId}:`, error);
+                        user.exerciseMax = 0; // Default to 0 on error
+                    }
+                }
+                userList.push(user);
+            }
             setUsers(userList);
         } catch (error) {
-            console.error('Failed to fetch users:', error);
+            console.error('Failed to fetch users or exercise maxes:', error);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activeFilter, selectedExerciseId, selectedExerciseName]);
 
     useEffect(() => {
+        // We can now fetch users immediately because availableExercises are static
         fetchUsers();
-        const authInstance = getAuth(); // Get the auth instance
-        const currentUser = authInstance.currentUser; // Get the current user
+        const authInstance = getAuth();
+        const currentUser = authInstance.currentUser;
         if (currentUser) {
-            setCurrentUserId(currentUser.uid); // Set the current user's UID
+            setCurrentUserId(currentUser.uid);
         }
-    }, [fetchUsers]);
+    }, [fetchUsers]); // Dependencies remain correct for fetchUsers
 
     const sortUsers = useCallback((usersToSort: User[]) => {
         return [...usersToSort].sort((a, b) => {
-            const aValue = a[activeFilter];
-            const bValue = b[activeFilter];
-            let valA: any = aValue;
-            let valB: any = bValue;
+            let aValue: any;
+            let bValue: any;
 
-            if (
-                typeof aValue === 'number' ||
-                activeFilter === 'timeInGym' ||
-                activeFilter === 'age' ||
-                activeFilter === 'bmi' ||
-                activeFilter === 'height' ||
-                activeFilter === 'weight'
-            ) {
-                valA = aValue ?? 0;
-                valB = bValue ?? 0;
-            } else if (typeof aValue === 'string') {
-                valA = aValue ?? '';
-                valB = bValue ?? '';
+            if (activeFilter === 'exerciseMax') {
+                aValue = a.exerciseMax ?? 0;
+                bValue = b.exerciseMax ?? 0;
+            } else {
+                aValue = a[activeFilter];
+                bValue = b[activeFilter];
+
+                if (typeof aValue === 'number' || activeFilter === 'timeInGym' || activeFilter === 'age' || activeFilter === 'bmi' || activeFilter === 'height' || activeFilter === 'weight') {
+                    aValue = aValue ?? 0;
+                    bValue = bValue ?? 0;
+                } else if (typeof aValue === 'string') {
+                    aValue = aValue ?? '';
+                    bValue = bValue ?? '';
+                }
             }
 
-            if (typeof valA === 'string' && typeof valB === 'string') {
-                return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-            } else if (typeof valA === 'number' && typeof valB === 'number') {
-                return sortOrder === 'asc' ? valA - valB : valB - valA;
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+            } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+                return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
             }
 
             return 0;
@@ -111,12 +166,25 @@ const Leaderboard = () => {
         } else {
             setActiveFilter(filter);
             setSortOrder(
-                filter === 'timeInGym' || filter === 'age' || filter === 'bmi' || filter === 'height' || filter === 'weight'
+                filter === 'timeInGym' || filter === 'age' || filter === 'bmi' || filter === 'height' || filter === 'weight' || filter === 'exerciseMax'
                     ? 'desc'
                     : 'asc'
             );
         }
+        // If switching to 'exerciseMax' and no exercise is selected yet, default to the first available one
+        if (filter === 'exerciseMax' && !selectedExerciseId && availableExercises.length > 0) {
+            setSelectedExerciseId(availableExercises[0].id);
+            setSelectedExerciseName(availableExercises[0].name);
+        }
     };
+
+    const handleExerciseFilterPress = (exerciseId: string, exerciseName: string) => {
+        setActiveFilter('exerciseMax');
+        setSelectedExerciseId(exerciseId);
+        setSelectedExerciseName(exerciseName);
+        setSortOrder('desc'); // Maxes should generally sort descending
+    };
+
 
     const getColumnHeader = (filter: FilterCategory) => {
         let header = '';
@@ -141,6 +209,9 @@ const Leaderboard = () => {
                 break;
             case 'workoutFrequency':
                 header = 'Workout Freq.';
+                break;
+            case 'exerciseMax':
+                header = `${selectedExerciseName || 'Exercise'} Max (kg)`;
                 break;
             default:
                 header = 'Stat';
@@ -176,6 +247,7 @@ const Leaderboard = () => {
         <SafeAreaView className="bg-primary-background h-full p-4">
             <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-6">🏆 Leaderboard</Text>
 
+            {/* Main Filter Buttons */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
                 <View className="flex-row justify-center items-center">
                     <FilterButton title="Time in Gym" isActive={activeFilter === 'timeInGym'} onPress={() => handleFilterPress('timeInGym')} />
@@ -185,8 +257,26 @@ const Leaderboard = () => {
                     <FilterButton title="Weight" isActive={activeFilter === 'weight'} onPress={() => handleFilterPress('weight')} />
                     <FilterButton title="Gym Level" isActive={activeFilter === 'gymLevel'} onPress={() => handleFilterPress('gymLevel')} />
                     <FilterButton title="Workout Freq." isActive={activeFilter === 'workoutFrequency'} onPress={() => handleFilterPress('workoutFrequency')} />
+                    {/* New filter button for Exercise Maxes */}
+                    <FilterButton title="Exercise Max" isActive={activeFilter === 'exerciseMax'} onPress={() => handleFilterPress('exerciseMax')} />
                 </View>
             </ScrollView>
+
+            {/* Exercise Selection Buttons (conditionally rendered when 'exerciseMax' filter is active) */}
+            {activeFilter === 'exerciseMax' && availableExercises.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 mt-2">
+                    <View className="flex-row justify-center items-center">
+                        {availableExercises.map((exercise) => (
+                            <FilterButton
+                                key={exercise.id}
+                                title={exercise.name}
+                                isActive={selectedExerciseId === exercise.id}
+                                onPress={() => handleExerciseFilterPress(exercise.id, exercise.name)}
+                            />
+                        ))}
+                    </View>
+                </ScrollView>
+            )}
 
             <View className="flex-row justify-between px-4 py-2 border-b border-gray-600">
                 <Text className="font-lato-bold text-gray-300 w-1/12 text-center">#</Text>
@@ -198,7 +288,7 @@ const Leaderboard = () => {
                 data={sortedUsers}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item, index }) => {
-                    const isCurrentUser = item.id === currentUserId; // Compare by user ID (UID)
+                    const isCurrentUser = item.id === currentUserId;
                     return (
                         <View
                             className={`flex-row justify-between px-4 py-2 border-b border-gray-800 ${
@@ -214,9 +304,11 @@ const Leaderboard = () => {
                             <Text className={`w-4/12 text-center ${isCurrentUser ? 'text-white font-lato-bold' : 'text-gray-300'}`}>
                                 {activeFilter === 'timeInGym'
                                     ? formatTotalSecondsToHMS(item.timeInGym)
-                                    : item[activeFilter] !== undefined
-                                        ? item[activeFilter]?.toString()
-                                        : 'N/A'}
+                                    : activeFilter === 'exerciseMax'
+                                        ? (item.exerciseMax !== undefined ? item.exerciseMax?.toString() : 'N/A')
+                                        : item[activeFilter] !== undefined
+                                            ? item[activeFilter]?.toString()
+                                            : 'N/A'}
                             </Text>
                         </View>
                     );
