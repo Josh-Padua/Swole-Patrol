@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, ActivityIndicator, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
-import { collection, getDocs, query, doc, getDoc } from 'firebase/firestore'; // Removed 'where' as it's no longer needed for exercise fetching
+import { View, Text, FlatList, ActivityIndicator, SafeAreaView, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { collection, getDocs, query, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
 
@@ -19,12 +19,11 @@ interface User {
     weight?: number;
     workoutFrequency?: string;
     timeInGym?: number;
-    exerciseMax?: number; // New: to store the max for the selected exercise
+    exerciseMax?: number;
 }
 
 type FilterCategory = 'timeInGym' | 'age' | 'bmi' | 'height' | 'weight' | 'gymLevel' | 'workoutFrequency' | 'exerciseMax';
 
-// --- DIRECTLY DEFINED EXERCISES WITH PROVIDED IDs ---
 const STATIC_EXERCISES = [
     { id: 'sFtHfYh6UyXjd6Il8oma', name: 'Bench Press' },
     { id: 'FwK5QNG5iyK71JvPSBFM', name: 'Deadlift' },
@@ -38,12 +37,9 @@ const Leaderboard = () => {
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-    // Using the static exercises directly
-    const [availableExercises] = useState(STATIC_EXERCISES); // No need for useState as it's static
+    const [availableExercises] = useState(STATIC_EXERCISES);
     const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(STATIC_EXERCISES[0]?.id || null);
     const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(STATIC_EXERCISES[0]?.name || null);
-
-    // Removed the useEffect that previously fetched exercise names dynamically
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
@@ -74,37 +70,25 @@ const Leaderboard = () => {
 
                 if (activeFilter === 'exerciseMax' && selectedExerciseId) {
                     try {
-                        const exactPath = `users/${user.id}/exerciseMaxes/${selectedExerciseId}/timePeriods/336`;
-                        // console.log(`Attempting to fetch from path: ${exactPath}`); // Debug log
-
                         const exerciseMaxDocRef = doc(
                             db,
                             'users',
                             user.id,
                             'exerciseMaxes',
                             selectedExerciseId,
-                            'timePeriods', // Confirmed: NO SPACE from your screenshot
-                            '336' // The fixed '336' document
+                            'timePeriods',
+                            '336'
                         );
                         const exerciseMaxDoc = await getDoc(exerciseMaxDocRef);
-
-                        // console.log(`For user ${user.username} (${user.id}), exercise ${selectedExerciseName} (${selectedExerciseId}):`); // Debug log
-                        // console.log(`  Document exists: ${exerciseMaxDoc.exists()}`); // Debug log
-                        // if (exerciseMaxDoc.exists()) { // Debug log
-                        //     console.log(`  Document data:`, exerciseMaxDoc.data()); // Debug log
-                        //     console.log(`  estimatedMax1RM value:`, exerciseMaxDoc.data()?.estimatedMax1RM); // Debug log
-                        // } else { // Debug log
-                        //     console.log(`  Document NOT found at path: ${exactPath}`); // Debug log
-                        // } // Debug log
 
                         if (exerciseMaxDoc.exists()) {
                             user.exerciseMax = exerciseMaxDoc.data()?.estimatedMax1RM ?? 0;
                         } else {
-                            user.exerciseMax = 0; // No data found for this exercise/period
+                            user.exerciseMax = 0;
                         }
                     } catch (error) {
                         console.warn(`Failed to fetch exercise max for user ${user.id} and exercise ${selectedExerciseId}:`, error);
-                        user.exerciseMax = 0; // Default to 0 on error
+                        user.exerciseMax = 0;
                     }
                 }
                 userList.push(user);
@@ -115,17 +99,16 @@ const Leaderboard = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeFilter, selectedExerciseId, selectedExerciseName]);
+    }, [activeFilter, selectedExerciseId]); // Removed selectedExerciseName from dependency array as it's not directly used in the fetch logic
 
     useEffect(() => {
-        // We can now fetch users immediately because availableExercises are static
         fetchUsers();
         const authInstance = getAuth();
         const currentUser = authInstance.currentUser;
         if (currentUser) {
             setCurrentUserId(currentUser.uid);
         }
-    }, [fetchUsers]); // Dependencies remain correct for fetchUsers
+    }, [fetchUsers]);
 
     const sortUsers = useCallback((usersToSort: User[]) => {
         return [...usersToSort].sort((a, b) => {
@@ -171,7 +154,6 @@ const Leaderboard = () => {
                     : 'asc'
             );
         }
-        // If switching to 'exerciseMax' and no exercise is selected yet, default to the first available one
         if (filter === 'exerciseMax' && !selectedExerciseId && availableExercises.length > 0) {
             setSelectedExerciseId(availableExercises[0].id);
             setSelectedExerciseName(availableExercises[0].name);
@@ -182,15 +164,14 @@ const Leaderboard = () => {
         setActiveFilter('exerciseMax');
         setSelectedExerciseId(exerciseId);
         setSelectedExerciseName(exerciseName);
-        setSortOrder('desc'); // Maxes should generally sort descending
+        setSortOrder('desc');
     };
-
 
     const getColumnHeader = (filter: FilterCategory) => {
         let header = '';
         switch (filter) {
             case 'timeInGym':
-                header = 'Time in Gym (HH:MM:SS)';
+                header = 'Time in Gym'; // Shortened for display
                 break;
             case 'age':
                 header = 'Age';
@@ -237,19 +218,21 @@ const Leaderboard = () => {
 
     if (loading) {
         return (
-            <SafeAreaView className="bg-primary-background h-full justify-center items-center">
+            <SafeAreaView className="bg-primary-background flex-1 justify-center items-center">
                 <ActivityIndicator size="large" color="#FFA500" />
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView className="bg-primary-background h-full p-4">
-            <Text className="font-lato-bold text-accent-orange text-center text-2xl mb-6">🏆 Leaderboard</Text>
+        <SafeAreaView className="bg-primary-background flex-1">
+            <View style={styles.headerContainer}>
+                <Text className="font-lato-bold text-accent-orange text-center text-2xl">🏆 Leaderboard</Text>
+            </View>
 
-            {/* Main Filter Buttons */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-                <View className="flex-row justify-center items-center">
+            {/* Filter Buttons Section */}
+            <View style={styles.filtersSection}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollViewContent}>
                     <FilterButton title="Time in Gym" isActive={activeFilter === 'timeInGym'} onPress={() => handleFilterPress('timeInGym')} />
                     <FilterButton title="Age" isActive={activeFilter === 'age'} onPress={() => handleFilterPress('age')} />
                     <FilterButton title="BMI" isActive={activeFilter === 'bmi'} onPress={() => handleFilterPress('bmi')} />
@@ -257,15 +240,11 @@ const Leaderboard = () => {
                     <FilterButton title="Weight" isActive={activeFilter === 'weight'} onPress={() => handleFilterPress('weight')} />
                     <FilterButton title="Gym Level" isActive={activeFilter === 'gymLevel'} onPress={() => handleFilterPress('gymLevel')} />
                     <FilterButton title="Workout Freq." isActive={activeFilter === 'workoutFrequency'} onPress={() => handleFilterPress('workoutFrequency')} />
-                    {/* New filter button for Exercise Maxes */}
                     <FilterButton title="Exercise Max" isActive={activeFilter === 'exerciseMax'} onPress={() => handleFilterPress('exerciseMax')} />
-                </View>
-            </ScrollView>
+                </ScrollView>
 
-            {/* Exercise Selection Buttons (conditionally rendered when 'exerciseMax' filter is active) */}
-            {activeFilter === 'exerciseMax' && availableExercises.length > 0 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 mt-2">
-                    <View className="flex-row justify-center items-center">
+                {activeFilter === 'exerciseMax' && availableExercises.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.exerciseFilterScrollViewContent}>
                         {availableExercises.map((exercise) => (
                             <FilterButton
                                 key={exercise.id}
@@ -274,9 +253,16 @@ const Leaderboard = () => {
                                 onPress={() => handleExerciseFilterPress(exercise.id, exercise.name)}
                             />
                         ))}
-                    </View>
-                </ScrollView>
-            )}
+                    </ScrollView>
+                )}
+            </View>
+
+            {/* Added a subtle text or divider here to fill the space */}
+            <View style={styles.leaderboardInfoContainer}>
+                <Text className="font-lato-regular text-gray-400 text-center text-sm">
+                    {activeFilter === 'exerciseMax' ? `Leaderboard for ${selectedExerciseName || 'Exercise'} Max` : `Leaderboard sorted by ${activeFilter}`}
+                </Text>
+            </View>
 
             <View className="flex-row justify-between px-4 py-2 border-b border-gray-600">
                 <Text className="font-lato-bold text-gray-300 w-1/12 text-center">#</Text>
@@ -313,6 +299,12 @@ const Leaderboard = () => {
                         </View>
                     );
                 }}
+                // Added empty list component for better UX when no data
+                ListEmptyComponent={() => (
+                    <View className="flex-1 justify-center items-center mt-8">
+                        <Text className="text-gray-500 font-lato-regular text-lg">No users found for this filter.</Text>
+                    </View>
+                )}
             />
         </SafeAreaView>
     );
@@ -332,5 +324,31 @@ const FilterButton: React.FC<FilterButtonProps> = ({ title, isActive, onPress })
         <Text className={`font-lato-regular ${isActive ? 'text-white' : 'text-gray-300'}`}>{title}</Text>
     </TouchableOpacity>
 );
+
+const styles = StyleSheet.create({
+    headerContainer: {
+        paddingVertical: 16, // Reduced padding from mb-6
+        paddingHorizontal: 16, // Keep horizontal padding consistent
+    },
+    filtersSection: {
+        marginBottom: 8, // Reduced margin
+    },
+    filterScrollViewContent: {
+        paddingHorizontal: 16, // Add horizontal padding to the scroll view content
+        paddingBottom: 4, // Small padding below the first row of buttons
+        justifyContent: 'center', // Center buttons horizontally
+    },
+    exerciseFilterScrollViewContent: {
+        paddingHorizontal: 16, // Add horizontal padding to the scroll view content
+        paddingTop: 4, // Small padding above the second row of buttons
+        paddingBottom: 8, // Small padding below the second row of buttons
+        justifyContent: 'center', // Center buttons horizontally
+    },
+    leaderboardInfoContainer: {
+        paddingVertical: 8, // Added padding to this new info text
+        paddingHorizontal: 16,
+        marginBottom: 8, // Spacing before the table headers
+    }
+});
 
 export default Leaderboard;
